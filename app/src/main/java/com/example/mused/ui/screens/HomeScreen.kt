@@ -19,7 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.edit
+import androidx.documentfile.provider.DocumentFile
+
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -33,19 +34,24 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    var files by remember { mutableStateOf<List<String>>(emptyList()) }
+
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val folderUri = result.data?.data?.toString()
+            val folderUri = result.data?.data
+            selectedFolderUri = folderUri?.toString()
 
-            selectedFolderUri = folderUri
+            folderUri?.let { uri ->
+                val documentFile = DocumentFile.fromTreeUri(context, uri)
 
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .edit {
-                    putString("selected_folder_uri", folderUri)
-                }
+                files = documentFile
+                    ?.listFiles()
+                    ?.filter { it.isFile }
+                    ?.mapNotNull { it.name }
+                    ?: emptyList()
+            }
         }
     }
 
@@ -71,6 +77,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         selectedFolderUri?.let { uri ->
             Text(text = "Selected folder:")
             Text(text = uri)
+        }
+
+        files.forEach { fileName ->
+            Text(text = fileName)
         }
     }
 }
