@@ -1,0 +1,39 @@
+# --- Gradle ---
+.gradle/
+build/
+**/build/
+
+# --- Local config ---
+local.properties
+
+# --- IDE (Android Studio / IntelliJ) ---
+.idea/
+*.iml
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+
+# --- Captures / profiling ---
+captures/
+
+# --- Native build ---
+.externalNativeBuild/
+.cxx/
+
+# --- Compiled files ---
+*.class
+
+# --- APK / Bundle outputs ---
+*.apk
+*.aab
+
+# --- Keystore (VERY IMPORTANT) ---
+*.jks
+*.keystore
+
+# --- Misc ---
+*.tmp
