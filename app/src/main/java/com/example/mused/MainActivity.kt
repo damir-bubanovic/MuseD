@@ -3,6 +3,10 @@ package com.example.mused
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.unit.dp
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,6 +48,12 @@ fun MusicApp(modifier: Modifier = Modifier) {
             text = "MUSED",
             style = MaterialTheme.typography.headlineMedium
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(onClick = { }) {
+            Text("Select Music Folder")
+        }
     }
 }
 
