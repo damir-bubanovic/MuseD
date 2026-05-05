@@ -10,6 +10,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -183,9 +190,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         if (currentSongName != null) {
             Row {
-                Button(
+                IconButton(
                     onClick = {
-                        val currentIndex = currentSongIndex ?: return@Button
+                        val currentIndex = currentSongIndex ?: return@IconButton
                         val previousIndex = currentIndex - 1
 
                         if (previousIndex >= 0) {
@@ -193,10 +200,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         }
                     }
                 ) {
-                    Text("Previous")
+                    Icon(
+                        imageVector = Icons.Filled.SkipPrevious,
+                        contentDescription = "Previous"
+                    )
                 }
 
-                Button(
+                IconButton(
                     onClick = {
                         mediaPlayer?.let { player ->
                             if (player.isPlaying) {
@@ -211,12 +221,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         }
                     }
                 ) {
-                    Text(if (isPlaying) "Pause" else "Play")
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play"
+                    )
                 }
 
-                Button(
+                IconButton(
                     onClick = {
-                        val currentIndex = currentSongIndex ?: return@Button
+                        val currentIndex = currentSongIndex ?: return@IconButton
                         val nextIndex = currentIndex + 1
 
                         if (nextIndex < files.size) {
@@ -224,7 +237,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         }
                     }
                 ) {
-                    Text("Next")
+                    Icon(
+                        imageVector = Icons.Filled.SkipNext,
+                        contentDescription = "Next"
+                    )
                 }
             }
         }
