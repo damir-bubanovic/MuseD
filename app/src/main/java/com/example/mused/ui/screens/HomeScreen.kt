@@ -1,7 +1,7 @@
 package com.example.mused.ui.screens
 
+import android.content.ComponentName
 import android.content.Context
-import android.media.MediaPlayer
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,8 +37,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.loadMusicFilesFromFolder
 import com.example.mused.features.folders.rememberFolderPickerLauncher
+import com.example.mused.features.player.MusicService
+import com.google.common.util.concurrent.MoreExecutors
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -53,7 +58,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var files by remember { mutableStateOf<List<String>>(emptyList()) }
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var mediaController by remember { mutableStateOf<MediaController?>(null) }
     var currentSongName by remember { mutableStateOf<String?>(null) }
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
@@ -74,6 +79,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    LaunchedEffect(Unit) {
+        val sessionToken = SessionToken(
+            context,
+            ComponentName(context, MusicService::class.java)
+        )
+
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+
+        controllerFuture.addListener(
+            {
+                mediaController = controllerFuture.get()
+            },
+            MoreExecutors.directExecutor()
+        )
+    }
+
     LaunchedEffect(selectedFolderUri) {
         selectedFolderUri?.let { uriString ->
             files = loadMusicFilesFromFolder(context, uriString)
@@ -86,35 +107,24 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         val uri = files[index].toUri()
         val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
-        mediaPlayer?.release()
-
         currentSongName = name
         currentSongIndex = index
         savedSongUri = files[index]
         savedPosition = 0
 
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(context, uri)
+        mediaController?.apply {
+            setMediaItem(MediaItem.fromUri(uri))
             prepare()
-            start()
-            isPlaying = true
-
-            setOnCompletionListener {
-                val nextIndex = index + 1
-
-                if (nextIndex < files.size) {
-                    playSong(nextIndex)
-                } else {
-                    isPlaying = false
-                }
-            }
+            play()
         }
+
+        isPlaying = true
     }
 
     fun savePlaybackState() {
         val currentIndex = currentSongIndex ?: return
         val currentFileUri = files.getOrNull(currentIndex) ?: return
-        val currentPosition = mediaPlayer?.currentPosition ?: 0
+        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
 
         savedSongUri = currentFileUri
         savedPosition = currentPosition
@@ -191,7 +201,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         val positionToResume = savedPosition
 
                         playSong(savedIndex)
-                        mediaPlayer?.seekTo(positionToResume)
+                        mediaController?.seekTo(positionToResume.toLong())
                         savedPosition = positionToResume
                     }
                 }
@@ -222,13 +232,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
                 IconButton(
                     onClick = {
-                        mediaPlayer?.let { player ->
-                            if (player.isPlaying) {
-                                player.pause()
+                        mediaController?.let { controller ->
+                            if (controller.isPlaying) {
+                                controller.pause()
                                 isPlaying = false
                                 savePlaybackState()
                             } else {
-                                player.start()
+                                controller.play()
                                 isPlaying = true
                                 savePlaybackState()
                             }
