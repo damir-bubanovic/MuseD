@@ -30,6 +30,7 @@ import com.example.mused.features.folders.loadMusicFilesFromFolder
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.delay
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -50,6 +51,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var hasAutoResumed by remember { mutableStateOf(false) }
+    var playbackPosition by remember { mutableIntStateOf(0) }
+    var playbackDuration by remember { mutableIntStateOf(0) }
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -82,6 +85,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             },
             MoreExecutors.directExecutor()
         )
+    }
+
+    LaunchedEffect(mediaController, isPlaying) {
+        while (isPlaying) {
+            playbackPosition = mediaController?.currentPosition?.toInt() ?: 0
+            playbackDuration = mediaController?.duration?.takeIf { it > 0 }?.toInt() ?: 0
+            delay(1000)
+        }
     }
 
     // Load files
@@ -199,6 +210,20 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         currentSongName?.let {
             Text("Now playing: $it")
+
+            Slider(
+                value = playbackPosition.toFloat(),
+                onValueChange = { newValue ->
+                    playbackPosition = newValue.toInt()
+                },
+                onValueChangeFinished = {
+                    mediaController?.seekTo(playbackPosition.toLong())
+                    savePlaybackState()
+                },
+                valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat()
+            )
+
+            Text("Time: ${playbackPosition / 1000}s / ${playbackDuration / 1000}s")
             Spacer(Modifier.height(8.dp))
         }
 
