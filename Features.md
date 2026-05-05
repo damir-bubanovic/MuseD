@@ -1,19 +1,22 @@
-# MUSED — Features Overview
+# MUSED — Features Overview (Updated)
 
 ## Goal
 
-MUSED is an offline Android music player that plays local files from a selected folder and allows seamless continuation from where playback stopped.
+MUSED is an offline Android music player that plays local files from a selected folder, supports background playback, and automatically resumes from the last position.
 
 ---
 
-## Chapter 1: Local Music Folder
+## Chapter 1: Local Music Folder ✅
 
-* User selects a folder containing music files
+**Implemented:**
+
+* User selects a folder via system picker (Storage Access Framework)
 * App scans and loads supported audio files
 * Works fully offline
+* Folder is persisted across app restarts
 * User can change folder anytime
 
-Supported formats (initial):
+**Supported formats:**
 
 * .mp3
 * .wav
@@ -23,115 +26,243 @@ Supported formats (initial):
 
 ---
 
-## Chapter 2: Song List
+## Chapter 2: Song List ✅
 
-* Display list of songs from selected folder
-* Show current playing song
-* Default order: file name
+**Implemented:**
 
-Future improvements:
+* Displays songs from selected folder
+* Shows currently playing song (highlight + indicator)
+* Click to play any song
+* Auto-updates when folder changes
+* Default sorting: file name (system order)
 
-* Sorting options
-* Shuffle
+**Planned:**
+
+* Sorting (name, date, duration)
+* Shuffle mode
 * Search
 
 ---
 
-## Chapter 3: Playback Controls
+## Chapter 3: Playback Controls ✅
 
-* Play
-* Pause
-* Stop
-* Next song
-* Previous song
+**Implemented (Media3-based):**
+
+* Play / Pause
+* Next / Previous
 * Auto-play next track
+* Playlist queue (entire folder)
+* Background playback via `MediaSessionService`
 
-UI elements:
+**UI:**
 
-* Play/Pause button
-* Progress bar
-* Time indicator
+* Icon-based controls (Material icons)
+* Seek bar (draggable)
+* Time display (mm:ss / mm:ss)
 
 ---
 
-## Chapter 4: Remember Playback State
+## Chapter 4: Playback State Persistence ✅
 
-App stores:
+**Stored:**
 
-* Selected folder
-* Current song
+* Selected folder URI
+* Current song URI
 * Playback position
 
-Example:
-User stops at:
-Song 5 → 01:42
+**Behavior:**
 
-Next launch:
-Resume Song 5 at 01:42
-
----
-
-## Chapter 5: Resume on App Start
-
-* App loads last session
-* User can continue playback immediately
-
-Flow:
-Open app → Tap "Continue" → Resume playback
+* State saved on pause/play interactions
+* Position updated after seeking
+* Safe handling if file is missing
 
 ---
 
-## Chapter 6: Folder Changes
+## Chapter 5: Auto Resume on App Start ✅
 
-* Selecting new folder resets playback
-* If songs are deleted:
+**Implemented:**
 
-    * If current song exists → continue
-    * If missing → start from first song
-* If all songs replaced → start fresh
+* App automatically resumes last song and position
+* No manual “Resume” button required
 
----
+**Flow:**
 
-## Chapter 7: Earbuds Support
+Open app → files load → auto resume (if valid)
 
-* Uses system audio output (Bluetooth handled by Android)
-* Future:
+**Safety:**
 
-    * Play/Pause from earbuds
-    * Auto-pause on disconnect
+* If song exists → resume
+* If missing → ignore safely (no crash)
 
 ---
 
-## Chapter 8: Offline Only
+## Chapter 6: Folder Changes ✅
 
-* No internet required
+**Implemented behavior:**
+
+* Selecting a new folder reloads song list
+* Playback resets to new context
+* Auto-resume only runs if saved song exists in new list
+
+**Handling edge cases:**
+
+* Deleted song → ignored
+* Replaced files → treated as new playlist
+* Invalid saved URI → safely skipped
+
+---
+
+## Chapter 7: System & Lock Screen Controls ✅
+
+**Implemented:**
+
+* Notification media player
+* Lock screen controls
+* Background playback (app can be closed)
+* Media buttons supported:
+
+  * Play / Pause
+  * Next
+  * Previous
+
+**Powered by:**
+
+Media3 + MediaSessionService + ExoPlayer
+
+---
+
+## Chapter 8: Earbuds / External Controls (Partial) 🟡
+
+**Working:**
+
+* Basic playback via system audio routing
+* MediaSession enables external control compatibility
+
+**Planned:**
+
+* Play/Pause via earbuds
+* Next/Previous via hardware buttons
+* Auto-pause on disconnect
+
+---
+
+## Chapter 9: Offline Only ✅
+
+* No internet usage
 * No streaming
 * No accounts
-* All files local
+* All files are local
 
 ---
 
-## Chapter 9: Permissions
+## Chapter 10: Permissions ✅
 
-* User selects folder manually
-* App gets access only to that folder
-* No full storage access required
+* Uses system folder picker (SAF)
+* Access limited to selected folder only
+* No broad storage permission required
 
 ---
 
-## Chapter 10: Version 1 Scope
+## Chapter 11: UI / Player Experience ✅
 
-Initial version includes:
+**Implemented:**
 
-1. Select folder
-2. Display songs
-3. Play music
-4. Pause
-5. Auto next
-6. Save and restore playback state
+* Clean layout (Compose)
+* Highlight current song
+* Icon-based controls
+* Seek bar
+* Formatted time display
+* Scrollable song list
+
+---
+
+## Chapter 12: Version 1 Scope (ACHIEVED + EXPANDED)
+
+### Originally planned:
+
+1. Select folder ✔
+2. Display songs ✔
+3. Play music ✔
+4. Pause ✔
+5. Auto next ✔
+6. Save/restore playback ✔
+
+### Now additionally implemented:
+
+7. Background playback ✔
+8. Notification controls ✔
+9. Lock screen controls ✔
+10. Auto resume ✔
+11. Seek bar ✔
+12. Playlist queue ✔
+
+---
+
+# 🚀 Next Features (Not Yet Implemented)
+
+## High Impact (Recommended Next)
+
+### 1. Album Art
+
+* Show in app
+* Show in notification
+* Show on lock screen
+
+---
+
+### 2. Shuffle / Repeat
+
+* Shuffle playlist
+* Repeat one / all
+
+---
+
+### 3. Better UI
+
+* Card-style song rows
+* Improved spacing & typography
+* Larger touch targets
+
+---
+
+### 4. Seek Bar Improvements
+
+* Show buffered progress
+* Smooth dragging
+
+---
+
+## Medium Priority
+
+### 5. Search
+
+* Filter songs by name
+
+### 6. Sorting
+
+* Name / date / duration
+
+### 7. Folder memory improvements
+
+* Multiple folders support
+
+---
+
+## Advanced / Architecture
+
+### 8. Refactor player logic out of UI
+
+* Move playback logic into dedicated layer (ViewModel / Manager)
 
 ---
 
 ## Summary
 
-MUSED is a simple, offline-first music player focused on continuous listening from a selected folder.
+MUSED is now a fully functional offline music player with:
+
+* folder-based playback
+* persistent state
+* background + lock screen control
+* modern Media3 architecture
+
+This is portfolio-level Android work.
