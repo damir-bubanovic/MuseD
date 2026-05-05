@@ -31,6 +31,18 @@ import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import android.graphics.Bitmap
+import androidx.media3.common.MediaMetadata
 
 
 
@@ -40,6 +52,68 @@ fun formatTime(ms: Int): String {
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
 }
+
+fun loadAlbumArtImage(
+    context: Context,
+    songUriString: String
+): ImageBitmap? {
+    val retriever = MediaMetadataRetriever()
+
+    return try {
+        retriever.setDataSource(context, songUriString.toUri())
+
+        val artworkBytes = retriever.embeddedPicture ?: return null
+        val bitmap = BitmapFactory.decodeByteArray(
+            artworkBytes,
+            0,
+            artworkBytes.size
+        )
+
+        bitmap?.asImageBitmap()
+    } catch (_: Exception) {
+        null
+    } finally {
+        retriever.release()
+    }
+}
+
+@Composable
+fun AlbumArt(
+    songUri: String?,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    val albumArt by produceState<ImageBitmap?>(initialValue = null, songUri) {
+        value = songUri?.let {
+            loadAlbumArtImage(context, it)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .size(180.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.LightGray),
+        contentAlignment = Alignment.Center
+    ) {
+        if (albumArt != null) {
+            Image(
+                bitmap = albumArt!!,
+                contentDescription = "Album art",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = "♪",
+                style = MaterialTheme.typography.displayLarge
+            )
+        }
+    }
+}
+
+
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -58,10 +132,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
     var currentSongName by remember { mutableStateOf<String?>(null) }
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
+    var currentSongUri by remember { mutableStateOf<String?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var hasAutoResumed by remember { mutableStateOf(false) }
     var playbackPosition by remember { mutableIntStateOf(0) }
     var playbackDuration by remember { mutableIntStateOf(0) }
+
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -121,6 +197,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         currentSongIndex = index
         savedSongUri = files[index]
         savedPosition = 0
+        currentSongUri = files[index]
 
         mediaController?.apply {
             val mediaItems = files.map { fileUri ->
@@ -128,14 +205,38 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 val itemName =
                     DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
 
+                val retriever = MediaMetadataRetriever()
+
+                val artworkBytes = try {
+                    retriever.setDataSource(context, itemUri)
+                    retriever.embeddedPicture
+                } catch (_: Exception) {
+                    null
+                } finally {
+                    retriever.release()
+                }
+
+                val metadata = MediaMetadata.Builder()
+                    .setTitle(itemName)
+                    .setArtist("MUSED")
+                    .apply {
+                        artworkBytes?.let {
+                            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
+
+                            val stream = java.io.ByteArrayOutputStream()
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+
+                            setArtworkData(
+                                stream.toByteArray(),
+                                MediaMetadata.PICTURE_TYPE_FRONT_COVER
+                            )
+                        }
+                    }
+                    .build()
+
                 MediaItem.Builder()
                     .setUri(itemUri)
-                    .setMediaMetadata(
-                        androidx.media3.common.MediaMetadata.Builder()
-                            .setTitle(itemName)
-                            .setArtist("MUSED")
-                            .build()
-                    )
+                    .setMediaMetadata(metadata)
                     .build()
             }
 
@@ -218,6 +319,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
 
         currentSongName?.let {
+            AlbumArt(
+                songUri = currentSongUri,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(Modifier.height(12.dp))
+
             Text("Now playing: $it")
 
             Slider(
