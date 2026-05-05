@@ -113,7 +113,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         savedPosition = 0
 
         mediaController?.apply {
-            setMediaItem(MediaItem.fromUri(uri))
+            val mediaItems = files.map { fileUri ->
+                val itemUri = fileUri.toUri()
+                val itemName = DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
+
+                MediaItem.Builder()
+                    .setUri(itemUri)
+                    .setMediaMetadata(
+                        androidx.media3.common.MediaMetadata.Builder()
+                            .setTitle(itemName)
+                            .setArtist("MUSED")
+                            .build()
+                    )
+                    .build()
+            }
+
+            setMediaItems(mediaItems, index, 0L)
             prepare()
             play()
         }

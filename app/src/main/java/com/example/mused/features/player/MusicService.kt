@@ -1,16 +1,15 @@
 package com.example.mused.features.player
 
-import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
+
+@UnstableApi
 class MusicService : MediaSessionService() {
 
-    companion object {
-        var player: ExoPlayer? = null
-    }
-
+    private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaSession
 
     override fun onCreate() {
@@ -18,8 +17,13 @@ class MusicService : MediaSessionService() {
 
         player = ExoPlayer.Builder(this).build()
 
-        mediaSession = MediaSession.Builder(this, player!!)
+        mediaSession = MediaSession.Builder(this, player)
             .build()
+
+        // THIS enables proper notification + lock screen controls
+        setMediaNotificationProvider(
+            androidx.media3.session.DefaultMediaNotificationProvider(this)
+        )
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
@@ -28,8 +32,7 @@ class MusicService : MediaSessionService() {
 
     override fun onDestroy() {
         mediaSession.release()
-        player?.release()
-        player = null
+        player.release()
         super.onDestroy()
     }
 }
