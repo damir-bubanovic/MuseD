@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.compose.runtime.mutableIntStateOf
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -43,6 +44,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
 
+    var savedSongUri by remember {
+        mutableStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getString("current_song_uri", null)
+        )
+    }
+
+    var savedPosition by remember {
+        mutableIntStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getInt("current_position_ms", 0)
+        )
+    }
+
     fun playSong(index: Int) {
         if (index !in files.indices) return
 
@@ -53,6 +70,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         currentSongName = name
         currentSongIndex = index
+        savedSongUri = files[index]
+        savedPosition = 0
 
         mediaPlayer = MediaPlayer().apply {
             setDataSource(context, uri)
@@ -70,6 +89,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+
+    fun savePlaybackState() {
+        val currentIndex = currentSongIndex ?: return
+        val currentFileUri = files.getOrNull(currentIndex) ?: return
+        val currentPosition = mediaPlayer?.currentPosition ?: 0
+        savedSongUri = currentFileUri
+        savedPosition = currentPosition
+
+        context
+            .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            .edit {
+                putString("current_song_uri", currentFileUri)
+                putInt("current_song_index", currentIndex)
+                putInt("current_position_ms", currentPosition)
+            }
     }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -133,6 +168,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             Text(text = "Now playing: $songName")
         }
 
+        savedSongUri?.let {
+            Text(text = "Saved position: ${savedPosition / 1000}s")
+        }
+
         if (currentSongName != null) {
             Button(
                 onClick = {
@@ -140,9 +179,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         if (player.isPlaying) {
                             player.pause()
                             isPlaying = false
+                            savePlaybackState()
                         } else {
                             player.start()
                             isPlaying = true
+                            savePlaybackState()
                         }
                     }
                 }
