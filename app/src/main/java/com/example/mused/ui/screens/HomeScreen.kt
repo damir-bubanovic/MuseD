@@ -2,14 +2,9 @@ package com.example.mused.ui.screens
 
 import android.content.ComponentName
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -17,18 +12,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +23,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.loadMusicFilesFromFolder
@@ -45,6 +31,7 @@ import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 
+@OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -62,6 +49,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var currentSongName by remember { mutableStateOf<String?>(null) }
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
+    var hasAutoResumed by remember { mutableStateOf(false) }
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -79,6 +67,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    // Connect to Media3 service
     LaunchedEffect(Unit) {
         val sessionToken = SessionToken(
             context,
@@ -95,6 +84,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    // Load files
     LaunchedEffect(selectedFolderUri) {
         selectedFolderUri?.let { uriString ->
             files = loadMusicFilesFromFolder(context, uriString)
@@ -115,7 +105,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         mediaController?.apply {
             val mediaItems = files.map { fileUri ->
                 val itemUri = fileUri.toUri()
-                val itemName = DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
+                val itemName =
+                    DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
 
                 MediaItem.Builder()
                     .setUri(itemUri)
@@ -144,23 +135,39 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         savedSongUri = currentFileUri
         savedPosition = currentPosition
 
-        context
-            .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-            .edit {
-                putString("current_song_uri", currentFileUri)
-                putInt("current_song_index", currentIndex)
-                putInt("current_position_ms", currentPosition)
-            }
+        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+            putString("current_song_uri", currentFileUri)
+            putInt("current_song_index", currentIndex)
+            putInt("current_position_ms", currentPosition)
+        }
+    }
+
+    // AUTO RESUME (correct position in file)
+    LaunchedEffect(files, savedSongUri, savedPosition, mediaController) {
+        if (hasAutoResumed) return@LaunchedEffect
+        if (files.isEmpty()) return@LaunchedEffect
+        if (savedSongUri == null) return@LaunchedEffect
+        if (savedPosition <= 0) return@LaunchedEffect
+        if (mediaController == null) return@LaunchedEffect
+
+        val savedIndex = files.indexOf(savedSongUri)
+
+        if (savedIndex != -1) {
+            val positionToResume = savedPosition
+
+            hasAutoResumed = true
+            playSong(savedIndex)
+            mediaController?.seekTo(positionToResume.toLong())
+            savedPosition = positionToResume
+        }
     }
 
     val openFolderPicker = rememberFolderPickerLauncher { folderUri ->
         selectedFolderUri = folderUri
 
-        context
-            .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-            .edit {
-                putString("selected_folder_uri", selectedFolderUri)
-            }
+        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+            putString("selected_folder_uri", selectedFolderUri)
+        }
 
         folderUri?.let {
             files = loadMusicFilesFromFolder(context, it)
@@ -174,128 +181,85 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
-        Text(
-            text = "MUSED",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Text("MUSED", style = MaterialTheme.typography.headlineMedium)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
         Button(onClick = openFolderPicker) {
             Text("Select Music Folder")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-        selectedFolderUri?.let { uri ->
-            Text(text = "Selected folder:")
-            Text(text = uri)
-            Spacer(modifier = Modifier.height(16.dp))
+        selectedFolderUri?.let {
+            Text("Selected folder:")
+            Text(it)
+            Spacer(Modifier.height(16.dp))
         }
 
-        currentSongName?.let { songName ->
-            Text(text = "Now playing: $songName")
-            Spacer(modifier = Modifier.height(8.dp))
+        currentSongName?.let {
+            Text("Now playing: $it")
+            Spacer(Modifier.height(8.dp))
         }
 
-        savedSongUri?.let { uriString ->
-            val savedName = DocumentFile.fromSingleUri(context, uriString.toUri())?.name ?: "Saved song"
+        savedSongUri?.let {
+            val savedName =
+                DocumentFile.fromSingleUri(context, it.toUri())?.name ?: "Saved song"
 
-            Text(text = "Saved song: $savedName")
-            Text(text = "Saved position: ${savedPosition / 1000}s")
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (savedSongUri != null && savedPosition > 0) {
-            Button(
-                onClick = {
-                    val savedIndex = files.indexOf(savedSongUri)
-
-                    if (savedIndex != -1) {
-                        val positionToResume = savedPosition
-
-                        playSong(savedIndex)
-                        mediaController?.seekTo(positionToResume.toLong())
-                        savedPosition = positionToResume
-                    }
-                }
-            ) {
-                Text("Resume")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Saved song: $savedName")
+            Text("Saved position: ${savedPosition / 1000}s")
+            Spacer(Modifier.height(8.dp))
         }
 
         if (currentSongName != null) {
             Row {
-                IconButton(
-                    onClick = {
-                        val currentIndex = currentSongIndex ?: return@IconButton
-                        val previousIndex = currentIndex - 1
+                IconButton(onClick = {
+                    val i = currentSongIndex ?: return@IconButton
+                    if (i > 0) playSong(i - 1)
+                }) {
+                    Icon(Icons.Filled.SkipPrevious, "Previous")
+                }
 
-                        if (previousIndex >= 0) {
-                            playSong(previousIndex)
+                IconButton(onClick = {
+                    mediaController?.let {
+                        if (it.isPlaying) {
+                            it.pause()
+                            isPlaying = false
+                            savePlaybackState()
+                        } else {
+                            it.play()
+                            isPlaying = true
+                            savePlaybackState()
                         }
                     }
-                ) {
+                }) {
                     Icon(
-                        imageVector = Icons.Filled.SkipPrevious,
-                        contentDescription = "Previous"
+                        if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        "Play/Pause"
                     )
                 }
 
-                IconButton(
-                    onClick = {
-                        mediaController?.let { controller ->
-                            if (controller.isPlaying) {
-                                controller.pause()
-                                isPlaying = false
-                                savePlaybackState()
-                            } else {
-                                controller.play()
-                                isPlaying = true
-                                savePlaybackState()
-                            }
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play"
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        val currentIndex = currentSongIndex ?: return@IconButton
-                        val nextIndex = currentIndex + 1
-
-                        if (nextIndex < files.size) {
-                            playSong(nextIndex)
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.SkipNext,
-                        contentDescription = "Next"
-                    )
+                IconButton(onClick = {
+                    val i = currentSongIndex ?: return@IconButton
+                    if (i < files.size - 1) playSong(i + 1)
+                }) {
+                    Icon(Icons.Filled.SkipNext, "Next")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        LazyColumn(Modifier.fillMaxSize()) {
             itemsIndexed(files) { index, fileUri ->
                 val uri = fileUri.toUri()
-                val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+                val name =
+                    DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
                 Text(
                     text = if (index == currentSongIndex) "▶ $name" else name,
-                    fontWeight = if (index == currentSongIndex) FontWeight.Bold else FontWeight.Normal,
+                    fontWeight = if (index == currentSongIndex)
+                        FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier.clickable {
                         playSong(index)
                     }
