@@ -4,10 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
-import androidx.core.net.toUri
-import androidx.compose.foundation.clickable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +21,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -40,7 +40,37 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var files by remember { mutableStateOf<List<String>>(emptyList()) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     var currentSongName by remember { mutableStateOf<String?>(null) }
+    var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
+
+    fun playSong(index: Int) {
+        if (index !in files.indices) return
+
+        val uri = files[index].toUri()
+        val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+
+        mediaPlayer?.release()
+
+        currentSongName = name
+        currentSongIndex = index
+
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(context, uri)
+            prepare()
+            start()
+            isPlaying = true
+
+            setOnCompletionListener {
+                val nextIndex = index + 1
+
+                if (nextIndex < files.size) {
+                    playSong(nextIndex)
+                } else {
+                    isPlaying = false
+                }
+            }
+        }
+    }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -48,6 +78,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         if (result.resultCode == Activity.RESULT_OK) {
             val folderUri = result.data?.data
             selectedFolderUri = folderUri?.toString()
+
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .edit {
+                    putString("selected_folder_uri", selectedFolderUri)
+                }
 
             folderUri?.let { uri ->
                 val documentFile = DocumentFile.fromTreeUri(context, uri)
@@ -63,9 +99,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                                 name.endsWith(".flac") ||
                                 name.endsWith(".ogg")
                     }
-                    ?.mapNotNull { file ->
-                        file.uri.toString()
-                    }
+                    ?.map { file -> file.uri.toString() }
                     ?: emptyList()
             }
         }
@@ -117,23 +151,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        files.forEach { fileUri ->
+        files.forEachIndexed { index, fileUri ->
             val uri = fileUri.toUri()
             val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
             Text(
                 text = name,
                 modifier = Modifier.clickable {
-                    mediaPlayer?.release()
-
-                    currentSongName = name
-
-                    mediaPlayer = MediaPlayer().apply {
-                        setDataSource(context, uri)
-                        prepare()
-                        start()
-                        isPlaying = true
-                    }
+                    playSong(index)
                 }
             )
         }
