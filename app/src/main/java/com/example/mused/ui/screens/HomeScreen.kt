@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.mused.features.folders.loadMusicFilesFromFolder
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 
@@ -197,16 +199,19 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        files.forEachIndexed { index, fileUri ->
-            val uri = fileUri.toUri()
-            val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+        LazyColumn {
+            itemsIndexed(files) { index, fileUri ->
+                val uri = fileUri.toUri()
+                val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
-            Text(
-                text = name,
-                modifier = Modifier.clickable {
-                    playSong(index)
-                }
-            )
+                Text(
+                    text = name,
+                    modifier = Modifier.clickable {
+                        playSong(index)
+                    }
+                )
+            }
         }
+
     }
 }
