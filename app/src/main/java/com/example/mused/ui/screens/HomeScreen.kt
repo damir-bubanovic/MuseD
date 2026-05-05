@@ -2,6 +2,7 @@ package com.example.mused.ui.screens
 
 import android.content.Context
 import android.media.MediaPlayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -205,7 +206,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
                 Text(
-                    text = name,
+                    text = if (index == currentSongIndex) "▶ $name" else name,
+                    fontWeight = if (index == currentSongIndex) FontWeight.Bold else FontWeight.Normal,
                     modifier = Modifier.clickable {
                         playSong(index)
                     }
