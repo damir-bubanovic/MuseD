@@ -25,6 +25,8 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.LaunchedEffect
+
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -58,6 +60,26 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getInt("current_position_ms", 0)
         )
+    }
+
+    LaunchedEffect(selectedFolderUri) {
+        selectedFolderUri?.let { uriString ->
+            val documentFile = DocumentFile.fromTreeUri(context, uriString.toUri())
+
+            files = documentFile
+                ?.listFiles()
+                ?.filter { it.isFile }
+                ?.filter { file ->
+                    val name = file.name?.lowercase() ?: ""
+                    name.endsWith(".mp3") ||
+                            name.endsWith(".wav") ||
+                            name.endsWith(".m4a") ||
+                            name.endsWith(".flac") ||
+                            name.endsWith(".ogg")
+                }
+                ?.map { file -> file.uri.toString() }
+                ?: emptyList()
+        }
     }
 
     fun playSong(index: Int) {
@@ -168,8 +190,29 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             Text(text = "Now playing: $songName")
         }
 
-        savedSongUri?.let {
+        savedSongUri?.let { uriString ->
+            val savedName = DocumentFile.fromSingleUri(context, uriString.toUri())?.name ?: "Saved song"
+
+            Text(text = "Saved song: $savedName")
             Text(text = "Saved position: ${savedPosition / 1000}s")
+        }
+
+        if (savedSongUri != null && savedPosition > 0) {
+            Button(
+                onClick = {
+                    val savedIndex = files.indexOf(savedSongUri)
+
+                    if (savedIndex != -1) {
+                        val positionToResume = savedPosition
+
+                        playSong(savedIndex)
+                        mediaPlayer?.seekTo(positionToResume)
+                        savedPosition = positionToResume
+                    }
+                }
+            ) {
+                Text("Resume")
+            }
         }
 
         if (currentSongName != null) {
