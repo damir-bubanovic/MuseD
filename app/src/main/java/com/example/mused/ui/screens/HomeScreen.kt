@@ -365,29 +365,44 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
 
         currentSongName?.let {
-            AlbumArt(
-                songUri = currentSongUri,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AlbumArt(
+                    songUri = currentSongUri
+                )
 
-            Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
 
-            Text("Now playing: $it")
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Slider(
-                value = playbackPosition.toFloat(),
-                onValueChange = { newValue ->
-                    playbackPosition = newValue.toInt()
-                },
-                onValueChangeFinished = {
-                    mediaController?.seekTo(playbackPosition.toLong())
-                    savePlaybackState()
-                },
-                valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat()
-            )
+                Spacer(Modifier.height(8.dp))
 
-            Text("Time: ${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}")
-            Spacer(Modifier.height(8.dp))
+                Slider(
+                    value = playbackPosition.toFloat(),
+                    onValueChange = { newValue ->
+                        playbackPosition = newValue.toInt()
+                    },
+                    onValueChangeFinished = {
+                        mediaController?.seekTo(playbackPosition.toLong())
+                        savePlaybackState()
+                    },
+                    valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = "${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(Modifier.height(8.dp))
+            }
         }
 
         savedSongUri?.let {
@@ -401,6 +416,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         if (currentSongName != null) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {
@@ -438,6 +455,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = {
