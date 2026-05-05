@@ -496,14 +496,41 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 val name =
                     DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
 
-                Text(
-                    text = if (index == currentSongIndex) "▶ $name" else name,
-                    fontWeight = if (index == currentSongIndex)
-                        FontWeight.Bold else FontWeight.Normal,
-                    modifier = Modifier.clickable {
-                        playSong(index)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { playSong(index) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (index == currentSongIndex)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (index == currentSongIndex) "▶" else "",
+                            modifier = Modifier.width(24.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Text(
+                            text = name,
+                            fontWeight = if (index == currentSongIndex)
+                                FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1
+                        )
                     }
-                )
+                }
             }
         }
     }
