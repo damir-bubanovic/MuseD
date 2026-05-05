@@ -3,6 +3,9 @@ package com.example.mused.ui.screens
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
+import androidx.core.net.toUri
+import androidx.compose.foundation.clickable
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +38,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var files by remember { mutableStateOf<List<String>>(emptyList()) }
+    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var currentSongName by remember { mutableStateOf<String?>(null) }
+    var isPlaying by remember { mutableStateOf(false) }
 
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -49,7 +55,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 files = documentFile
                     ?.listFiles()
                     ?.filter { it.isFile }
-                    ?.mapNotNull { it.name }
+                    ?.filter { file ->
+                        val name = file.name?.lowercase() ?: ""
+                        name.endsWith(".mp3") ||
+                                name.endsWith(".wav") ||
+                                name.endsWith(".m4a") ||
+                                name.endsWith(".flac") ||
+                                name.endsWith(".ogg")
+                    }
+                    ?.mapNotNull { file ->
+                        file.uri.toString()
+                    }
                     ?: emptyList()
             }
         }
@@ -79,8 +95,47 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             Text(text = uri)
         }
 
-        files.forEach { fileName ->
-            Text(text = fileName)
+        currentSongName?.let { songName ->
+            Text(text = "Now playing: $songName")
+        }
+
+        if (currentSongName != null) {
+            Button(
+                onClick = {
+                    mediaPlayer?.let { player ->
+                        if (player.isPlaying) {
+                            player.pause()
+                            isPlaying = false
+                        } else {
+                            player.start()
+                            isPlaying = true
+                        }
+                    }
+                }
+            ) {
+                Text(if (isPlaying) "Pause" else "Play")
+            }
+        }
+
+        files.forEach { fileUri ->
+            val uri = fileUri.toUri()
+            val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+
+            Text(
+                text = name,
+                modifier = Modifier.clickable {
+                    mediaPlayer?.release()
+
+                    currentSongName = name
+
+                    mediaPlayer = MediaPlayer().apply {
+                        setDataSource(context, uri)
+                        prepare()
+                        start()
+                        isPlaying = true
+                    }
+                }
+            )
         }
     }
 }
