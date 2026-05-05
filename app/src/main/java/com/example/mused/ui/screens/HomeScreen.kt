@@ -2,21 +2,25 @@ package com.example.mused.ui.screens
 
 import android.content.Context
 import android.media.MediaPlayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,11 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import com.example.mused.features.folders.loadMusicFilesFromFolder
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 
@@ -139,28 +143,34 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = "MUSED",
             style = MaterialTheme.typography.headlineMedium
         )
 
-        Button(
-            onClick = openFolderPicker
-        ) {
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = openFolderPicker) {
             Text("Select Music Folder")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         selectedFolderUri?.let { uri ->
             Text(text = "Selected folder:")
             Text(text = uri)
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         currentSongName?.let { songName ->
             Text(text = "Now playing: $songName")
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         savedSongUri?.let { uriString ->
@@ -168,6 +178,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             Text(text = "Saved song: $savedName")
             Text(text = "Saved position: ${savedPosition / 1000}s")
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         if (savedSongUri != null && savedPosition > 0) {
@@ -186,6 +198,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             ) {
                 Text("Resume")
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         if (currentSongName != null) {
@@ -243,9 +257,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        LazyColumn {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
             itemsIndexed(files) { index, fileUri ->
                 val uri = fileUri.toUri()
                 val name = DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
@@ -259,6 +277,5 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-
     }
 }
