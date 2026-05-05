@@ -3,6 +3,7 @@ package com.example.mused.ui.screens
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -181,22 +182,50 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
 
         if (currentSongName != null) {
-            Button(
-                onClick = {
-                    mediaPlayer?.let { player ->
-                        if (player.isPlaying) {
-                            player.pause()
-                            isPlaying = false
-                            savePlaybackState()
-                        } else {
-                            player.start()
-                            isPlaying = true
-                            savePlaybackState()
+            Row {
+                Button(
+                    onClick = {
+                        val currentIndex = currentSongIndex ?: return@Button
+                        val previousIndex = currentIndex - 1
+
+                        if (previousIndex >= 0) {
+                            playSong(previousIndex)
                         }
                     }
+                ) {
+                    Text("Previous")
                 }
-            ) {
-                Text(if (isPlaying) "Pause" else "Play")
+
+                Button(
+                    onClick = {
+                        mediaPlayer?.let { player ->
+                            if (player.isPlaying) {
+                                player.pause()
+                                isPlaying = false
+                                savePlaybackState()
+                            } else {
+                                player.start()
+                                isPlaying = true
+                                savePlaybackState()
+                            }
+                        }
+                    }
+                ) {
+                    Text(if (isPlaying) "Pause" else "Play")
+                }
+
+                Button(
+                    onClick = {
+                        val currentIndex = currentSongIndex ?: return@Button
+                        val nextIndex = currentIndex + 1
+
+                        if (nextIndex < files.size) {
+                            playSong(nextIndex)
+                        }
+                    }
+                ) {
+                    Text("Next")
+                }
             }
         }
 
