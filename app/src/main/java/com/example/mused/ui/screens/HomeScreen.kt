@@ -2,11 +2,17 @@ package com.example.mused.ui.screens
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import androidx.annotation.OptIn
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -16,6 +22,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,6 +34,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -31,19 +43,7 @@ import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
-import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import android.graphics.Bitmap
-import androidx.media3.common.MediaMetadata
-
+import androidx.media3.common.Player
 
 
 fun formatTime(ms: Int): String {
@@ -113,8 +113,6 @@ fun AlbumArt(
     }
 }
 
-
-
 @OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -137,7 +135,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var hasAutoResumed by remember { mutableStateOf(false) }
     var playbackPosition by remember { mutableIntStateOf(0) }
     var playbackDuration by remember { mutableIntStateOf(0) }
-
+    var isShuffleEnabled by remember { mutableStateOf(false) }
+    var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -155,7 +154,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    // Connect to Media3 service
     LaunchedEffect(Unit) {
         val sessionToken = SessionToken(
             context,
@@ -180,7 +178,47 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // Load files
+    DisposableEffect(mediaController, files) {
+        val controller = mediaController
+
+        if (controller == null) {
+            onDispose { }
+        } else {
+            val listener = object : Player.Listener {
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    val index = controller.currentMediaItemIndex
+                    val currentFile = files.getOrNull(index)
+
+                    if (currentFile != null) {
+                        val uri = currentFile.toUri()
+                        val name =
+                            DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+
+                        currentSongIndex = index
+                        currentSongName = name
+                        currentSongUri = currentFile
+                        savedSongUri = currentFile
+                        savedPosition = 0
+                        playbackPosition = 0
+                    }
+                }
+
+                override fun onIsPlayingChanged(isPlayingNow: Boolean) {
+                    isPlaying = isPlayingNow
+                }
+            }
+
+            controller.addListener(listener)
+
+            onDispose {
+                controller.removeListener(listener)
+            }
+        }
+    }
+
     LaunchedEffect(selectedFolderUri) {
         selectedFolderUri?.let { uriString ->
             files = loadMusicFilesFromFolder(context, uriString)
@@ -241,6 +279,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             setMediaItems(mediaItems, index, 0L)
+
+            shuffleModeEnabled = isShuffleEnabled
+
+            repeatMode = when (selectedRepeatMode) {
+                1 -> Player.REPEAT_MODE_ONE
+                2 -> Player.REPEAT_MODE_ALL
+                else -> Player.REPEAT_MODE_OFF
+            }
+
             prepare()
             play()
         }
@@ -263,7 +310,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // AUTO RESUME (correct position in file)
     LaunchedEffect(files, savedSongUri, savedPosition, mediaController) {
         if (hasAutoResumed) return@LaunchedEffect
         if (files.isEmpty()) return@LaunchedEffect
@@ -354,7 +400,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
 
         if (currentSongName != null) {
-            Row {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = {
                     val i = currentSongIndex ?: return@IconButton
                     if (i > 0) playSong(i - 1)
@@ -386,6 +434,37 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     if (i < files.size - 1) playSong(i + 1)
                 }) {
                     Icon(Icons.Filled.SkipNext, "Next")
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = {
+                    isShuffleEnabled = !isShuffleEnabled
+                    mediaController?.shuffleModeEnabled = isShuffleEnabled
+                }) {
+                    Text(if (isShuffleEnabled) "Shuffle ON" else "Shuffle OFF")
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                TextButton(onClick = {
+                    selectedRepeatMode = (selectedRepeatMode + 1) % 3
+
+                    mediaController?.repeatMode = when (selectedRepeatMode) {
+                        1 -> Player.REPEAT_MODE_ONE
+                        2 -> Player.REPEAT_MODE_ALL
+                        else -> Player.REPEAT_MODE_OFF
+                    }
+                }) {
+                    Text(
+                        when (selectedRepeatMode) {
+                            1 -> "Repeat ONE"
+                            2 -> "Repeat ALL"
+                            else -> "Repeat OFF"
+                        }
+                    )
                 }
             }
 
