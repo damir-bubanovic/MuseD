@@ -1,11 +1,7 @@
 package com.example.mused.ui.screens
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.media.MediaPlayer
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +10,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -24,9 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.LaunchedEffect
-
+import com.example.mused.features.folders.loadMusicFilesFromFolder
+import com.example.mused.features.folders.rememberFolderPickerLauncher
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -64,21 +61,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     LaunchedEffect(selectedFolderUri) {
         selectedFolderUri?.let { uriString ->
-            val documentFile = DocumentFile.fromTreeUri(context, uriString.toUri())
-
-            files = documentFile
-                ?.listFiles()
-                ?.filter { it.isFile }
-                ?.filter { file ->
-                    val name = file.name?.lowercase() ?: ""
-                    name.endsWith(".mp3") ||
-                            name.endsWith(".wav") ||
-                            name.endsWith(".m4a") ||
-                            name.endsWith(".flac") ||
-                            name.endsWith(".ogg")
-                }
-                ?.map { file -> file.uri.toString() }
-                ?: emptyList()
+            files = loadMusicFilesFromFolder(context, uriString)
         }
     }
 
@@ -117,6 +100,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         val currentIndex = currentSongIndex ?: return
         val currentFileUri = files.getOrNull(currentIndex) ?: return
         val currentPosition = mediaPlayer?.currentPosition ?: 0
+
         savedSongUri = currentFileUri
         savedPosition = currentPosition
 
@@ -129,36 +113,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
     }
 
-    val folderPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val folderUri = result.data?.data
-            selectedFolderUri = folderUri?.toString()
+    val openFolderPicker = rememberFolderPickerLauncher { folderUri ->
+        selectedFolderUri = folderUri
 
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .edit {
-                    putString("selected_folder_uri", selectedFolderUri)
-                }
-
-            folderUri?.let { uri ->
-                val documentFile = DocumentFile.fromTreeUri(context, uri)
-
-                files = documentFile
-                    ?.listFiles()
-                    ?.filter { it.isFile }
-                    ?.filter { file ->
-                        val name = file.name?.lowercase() ?: ""
-                        name.endsWith(".mp3") ||
-                                name.endsWith(".wav") ||
-                                name.endsWith(".m4a") ||
-                                name.endsWith(".flac") ||
-                                name.endsWith(".ogg")
-                    }
-                    ?.map { file -> file.uri.toString() }
-                    ?: emptyList()
+        context
+            .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            .edit {
+                putString("selected_folder_uri", selectedFolderUri)
             }
+
+        folderUri?.let {
+            files = loadMusicFilesFromFolder(context, it)
         }
     }
 
@@ -173,10 +138,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
 
         Button(
-            onClick = {
-                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                folderPickerLauncher.launch(intent)
-            }
+            onClick = openFolderPicker
         ) {
             Text("Select Music Folder")
         }
