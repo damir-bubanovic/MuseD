@@ -32,6 +32,15 @@ import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
+
+
+fun formatTime(ms: Int): String {
+    val totalSeconds = ms / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
 @OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
@@ -223,7 +232,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat()
             )
 
-            Text("Time: ${playbackPosition / 1000}s / ${playbackDuration / 1000}s")
+            Text("Time: ${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}")
             Spacer(Modifier.height(8.dp))
         }
 
