@@ -2,7 +2,6 @@ package com.example.mused.ui.screens
 
 import android.content.ComponentName
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import androidx.annotation.OptIn
@@ -35,6 +34,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -43,14 +43,20 @@ import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
-import androidx.media3.common.Player
-
 
 fun formatTime(ms: Int): String {
     val totalSeconds = ms / 1000
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
+}
+
+fun formatFolderName(folderUri: String): String {
+    val decoded = java.net.URLDecoder.decode(folderUri, "UTF-8")
+    val path = decoded.substringAfterLast(":")
+    val parts = path.split("/").filter { it.isNotBlank() }
+
+    return parts.joinToString(" / ")
 }
 
 fun loadAlbumArtImage(
@@ -92,7 +98,7 @@ fun AlbumArt(
 
     Box(
         modifier = modifier
-            .size(180.dp)
+            .size(200.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(Color.LightGray),
         contentAlignment = Alignment.Center
@@ -117,6 +123,7 @@ fun AlbumArt(
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val showPlayerScreenState = remember { mutableStateOf(false) }
 
     var selectedFolderUri by remember {
         mutableStateOf(
@@ -128,15 +135,20 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var files by remember { mutableStateOf<List<String>>(emptyList()) }
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
+
     var currentSongName by remember { mutableStateOf<String?>(null) }
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var currentSongUri by remember { mutableStateOf<String?>(null) }
+
     var isPlaying by remember { mutableStateOf(false) }
-    var hasAutoResumed by remember { mutableStateOf(false) }
+
     var playbackPosition by remember { mutableIntStateOf(0) }
     var playbackDuration by remember { mutableIntStateOf(0) }
+
     var isShuffleEnabled by remember { mutableStateOf(false) }
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
+
+    var searchQuery by remember { mutableStateOf("") }
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -201,7 +213,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         currentSongName = name
                         currentSongUri = currentFile
                         savedSongUri = currentFile
-                        savedPosition = 0
                         playbackPosition = 0
                     }
                 }
@@ -220,8 +231,23 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(selectedFolderUri) {
-        selectedFolderUri?.let { uriString ->
-            files = loadMusicFilesFromFolder(context, uriString)
+        selectedFolderUri?.let { folderUri ->
+            files = loadMusicFilesFromFolder(context, folderUri)
+        }
+    }
+
+    fun savePlaybackState() {
+        val currentIndex = currentSongIndex ?: return
+        val currentFileUri = files.getOrNull(currentIndex) ?: return
+        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
+
+        savedSongUri = currentFileUri
+        savedPosition = currentPosition
+
+        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+            putString("current_song_uri", currentFileUri)
+            putInt("current_song_index", currentIndex)
+            putInt("current_position_ms", currentPosition)
         }
     }
 
@@ -233,9 +259,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         currentSongName = name
         currentSongIndex = index
-        savedSongUri = files[index]
-        savedPosition = 0
         currentSongUri = files[index]
+        savedSongUri = files[index]
 
         mediaController?.apply {
             val mediaItems = files.map { fileUri ->
@@ -262,7 +287,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
 
                             val stream = java.io.ByteArrayOutputStream()
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, stream)
 
                             setArtworkData(
                                 stream.toByteArray(),
@@ -292,26 +317,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             play()
         }
 
-        isPlaying = true
-    }
-
-    fun savePlaybackState() {
-        val currentIndex = currentSongIndex ?: return
-        val currentFileUri = files.getOrNull(currentIndex) ?: return
-        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
-
-        savedSongUri = currentFileUri
-        savedPosition = currentPosition
-
-        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
-            putString("current_song_uri", currentFileUri)
-            putInt("current_song_index", currentIndex)
-            putInt("current_position_ms", currentPosition)
-        }
+        showPlayerScreenState.value = true
     }
 
     LaunchedEffect(files, savedSongUri, savedPosition, mediaController) {
-        if (hasAutoResumed) return@LaunchedEffect
         if (files.isEmpty()) return@LaunchedEffect
         if (savedSongUri == null) return@LaunchedEffect
         if (savedPosition <= 0) return@LaunchedEffect
@@ -322,10 +331,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         if (savedIndex != -1) {
             val positionToResume = savedPosition
 
-            hasAutoResumed = true
             playSong(savedIndex)
             mediaController?.seekTo(positionToResume.toLong())
-            savedPosition = positionToResume
         }
     }
 
@@ -341,42 +348,117 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text("MUSED", style = MaterialTheme.typography.headlineMedium)
+    val filteredFiles = files.filter { fileUri ->
+        val name = DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
+        name.contains(searchQuery, ignoreCase = true)
+    }
 
-        Spacer(Modifier.height(16.dp))
+    if (!showPlayerScreenState.value) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text("MUSED", style = MaterialTheme.typography.headlineMedium)
 
-        Button(onClick = openFolderPicker) {
-            Text("Select Music Folder")
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        selectedFolderUri?.let {
-            Text("Selected folder:")
-            Text(it)
             Spacer(Modifier.height(16.dp))
-        }
 
-        currentSongName?.let {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                AlbumArt(
-                    songUri = currentSongUri
+            Button(onClick = openFolderPicker) {
+                Text("Select Music Folder")
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            selectedFolderUri?.let { folderUri ->
+                Text(
+                    text = "Folder: ${formatFolderName(folderUri)}",
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
+            }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search songs") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            LazyColumn(Modifier.fillMaxSize()) {
+                itemsIndexed(filteredFiles) { _, fileUri ->
+                    val index = files.indexOf(fileUri)
+                    val uri = fileUri.toUri()
+                    val name =
+                        DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable { playSong(index) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (index == currentSongIndex)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (index == currentSongIndex) "▶" else "",
+                                modifier = Modifier.width(24.dp),
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(Modifier.width(8.dp))
+
+                            Text(
+                                text = name,
+                                fontWeight = if (index == currentSongIndex)
+                                    FontWeight.Bold else FontWeight.Normal,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = { showPlayerScreenState.value = false },
+                modifier = Modifier.align(Alignment.Start)
+            ) {
+                Text("Back to Library")
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            currentSongName?.let { songName ->
+                AlbumArt(songUri = currentSongUri)
+
+                Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = it,
+                    text = songName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -401,20 +483,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodySmall
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(16.dp))
             }
-        }
 
-        savedSongUri?.let {
-            val savedName =
-                DocumentFile.fromSingleUri(context, it.toUri())?.name ?: "Saved song"
-
-            Text("Saved song: $savedName")
-            Text("Saved position: ${savedPosition / 1000}s")
-            Spacer(Modifier.height(8.dp))
-        }
-
-        if (currentSongName != null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -428,15 +499,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 }
 
                 IconButton(onClick = {
-                    mediaController?.let {
-                        if (it.isPlaying) {
-                            it.pause()
-                            isPlaying = false
+                    mediaController?.let { controller ->
+                        if (controller.isPlaying) {
+                            controller.pause()
                             savePlaybackState()
                         } else {
-                            it.play()
-                            isPlaying = true
-                            savePlaybackState()
+                            controller.play()
                         }
                     }
                 }) {
@@ -453,6 +521,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     Icon(Icons.Filled.SkipNext, "Next")
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -484,52 +554,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             else -> "Repeat OFF"
                         }
                     )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-        }
-
-        LazyColumn(Modifier.fillMaxSize()) {
-            itemsIndexed(files) { index, fileUri ->
-                val uri = fileUri.toUri()
-                val name =
-                    DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { playSong(index) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (index == currentSongIndex)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (index == currentSongIndex) "▶" else "",
-                            modifier = Modifier.width(24.dp),
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(Modifier.width(8.dp))
-
-                        Text(
-                            text = name,
-                            fontWeight = if (index == currentSongIndex)
-                                FontWeight.Bold else FontWeight.Normal,
-                            maxLines = 1
-                        )
-                    }
                 }
             }
         }
