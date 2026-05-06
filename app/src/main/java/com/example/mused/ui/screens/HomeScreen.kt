@@ -2,38 +2,14 @@ package com.example.mused.ui.screens
 
 import android.content.ComponentName
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
 import androidx.annotation.OptIn
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -41,89 +17,17 @@ import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.loadMusicFilesFromFolder
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
+import com.example.mused.features.player.buildMediaItems
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
-fun formatTime(ms: Int): String {
-    val totalSeconds = ms / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%d:%02d".format(minutes, seconds)
-}
 
-fun formatFolderName(folderUri: String): String {
-    val decoded = java.net.URLDecoder.decode(folderUri, "UTF-8")
-    val path = decoded.substringAfterLast(":")
-    val parts = path.split("/").filter { it.isNotBlank() }
-
-    return parts.joinToString(" / ")
-}
-
-fun loadAlbumArtImage(
-    context: Context,
-    songUriString: String
-): ImageBitmap? {
-    val retriever = MediaMetadataRetriever()
-
-    return try {
-        retriever.setDataSource(context, songUriString.toUri())
-
-        val artworkBytes = retriever.embeddedPicture ?: return null
-        val bitmap = BitmapFactory.decodeByteArray(
-            artworkBytes,
-            0,
-            artworkBytes.size
-        )
-
-        bitmap?.asImageBitmap()
-    } catch (_: Exception) {
-        null
-    } finally {
-        retriever.release()
-    }
-}
-
-@Composable
-fun AlbumArt(
-    songUri: String?,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-
-    val albumArt by produceState<ImageBitmap?>(initialValue = null, songUri) {
-        value = songUri?.let {
-            loadAlbumArtImage(context, it)
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .size(200.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.LightGray),
-        contentAlignment = Alignment.Center
-    ) {
-        if (albumArt != null) {
-            Image(
-                bitmap = albumArt!!,
-                contentDescription = "Album art",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Text(
-                text = "♪",
-                style = MaterialTheme.typography.displayLarge
-            )
-        }
-    }
-}
-
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val showPlayerScreenState = remember { mutableStateOf(false) }
+    var showPlayerScreen by remember { mutableStateOf(false) }
 
     var selectedFolderUri by remember {
         mutableStateOf(
@@ -166,6 +70,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    var hasAutoResumed by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         val sessionToken = SessionToken(
             context,
@@ -175,9 +81,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
 
         controllerFuture.addListener(
-            {
-                mediaController = controllerFuture.get()
-            },
+            { mediaController = controllerFuture.get() },
             MoreExecutors.directExecutor()
         )
     }
@@ -197,10 +101,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             onDispose { }
         } else {
             val listener = object : Player.Listener {
-                override fun onMediaItemTransition(
-                    mediaItem: MediaItem?,
-                    reason: Int
-                ) {
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     val index = controller.currentMediaItemIndex
                     val currentFile = files.getOrNull(index)
 
@@ -263,48 +164,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         savedSongUri = files[index]
 
         mediaController?.apply {
-            val mediaItems = files.map { fileUri ->
-                val itemUri = fileUri.toUri()
-                val itemName =
-                    DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
-
-                val retriever = MediaMetadataRetriever()
-
-                val artworkBytes = try {
-                    retriever.setDataSource(context, itemUri)
-                    retriever.embeddedPicture
-                } catch (_: Exception) {
-                    null
-                } finally {
-                    retriever.release()
-                }
-
-                val metadata = MediaMetadata.Builder()
-                    .setTitle(itemName)
-                    .setArtist("MUSED")
-                    .apply {
-                        artworkBytes?.let {
-                            val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-
-                            val stream = java.io.ByteArrayOutputStream()
-                            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, stream)
-
-                            setArtworkData(
-                                stream.toByteArray(),
-                                MediaMetadata.PICTURE_TYPE_FRONT_COVER
-                            )
-                        }
-                    }
-                    .build()
-
-                MediaItem.Builder()
-                    .setUri(itemUri)
-                    .setMediaMetadata(metadata)
-                    .build()
-            }
+            val mediaItems = buildMediaItems(context, files)
 
             setMediaItems(mediaItems, index, 0L)
-
             shuffleModeEnabled = isShuffleEnabled
 
             repeatMode = when (selectedRepeatMode) {
@@ -316,11 +178,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             prepare()
             play()
         }
-
-        showPlayerScreenState.value = true
     }
 
-    LaunchedEffect(files, savedSongUri, savedPosition, mediaController) {
+    LaunchedEffect(files, savedSongUri, mediaController) {
+        if (hasAutoResumed) return@LaunchedEffect
         if (files.isEmpty()) return@LaunchedEffect
         if (savedSongUri == null) return@LaunchedEffect
         if (savedPosition <= 0) return@LaunchedEffect
@@ -331,231 +192,97 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         if (savedIndex != -1) {
             val positionToResume = savedPosition
 
+            hasAutoResumed = true
             playSong(savedIndex)
             mediaController?.seekTo(positionToResume.toLong())
+            showPlayerScreen = false
         }
     }
 
     val openFolderPicker = rememberFolderPickerLauncher { folderUri ->
         selectedFolderUri = folderUri
+        hasAutoResumed = false
 
         context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
             putString("selected_folder_uri", selectedFolderUri)
         }
 
-        folderUri?.let {
-            files = loadMusicFilesFromFolder(context, it)
+        folderUri?.let { selectedUri ->
+            files = loadMusicFilesFromFolder(context, selectedUri)
         }
     }
 
-    val filteredFiles = files.filter { fileUri ->
-        val name = DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
-        name.contains(searchQuery, ignoreCase = true)
-    }
-
-    if (!showPlayerScreenState.value) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text("MUSED", style = MaterialTheme.typography.headlineMedium)
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(onClick = openFolderPicker) {
-                Text("Select Music Folder")
+    if (!showPlayerScreen) {
+        LibraryScreen(
+            modifier = modifier,
+            selectedFolderUri = selectedFolderUri,
+            files = files,
+            currentSongIndex = currentSongIndex,
+            searchQuery = searchQuery,
+            onSearchChange = { newSearchQuery ->
+                searchQuery = newSearchQuery
+            },
+            onPickFolder = { openFolderPicker() },
+            onPlaySong = { index ->
+                playSong(index)
+                showPlayerScreen = true
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            selectedFolderUri?.let { folderUri ->
-                Text(
-                    text = "Folder: ${formatFolderName(folderUri)}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                Spacer(Modifier.height(16.dp))
-            }
-
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text("Search songs") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            LazyColumn(Modifier.fillMaxSize()) {
-                itemsIndexed(filteredFiles) { _, fileUri ->
-                    val index = files.indexOf(fileUri)
-                    val uri = fileUri.toUri()
-                    val name =
-                        DocumentFile.fromSingleUri(context, uri)?.name ?: "Unknown song"
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable { playSong(index) },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (index == currentSongIndex)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = if (index == currentSongIndex) "▶" else "",
-                                modifier = Modifier.width(24.dp),
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Spacer(Modifier.width(8.dp))
-
-                            Text(
-                                text = name,
-                                fontWeight = if (index == currentSongIndex)
-                                    FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        )
     } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Button(
-                onClick = { showPlayerScreenState.value = false },
-                modifier = Modifier.align(Alignment.Start)
-            ) {
-                Text("Back to Library")
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            currentSongName?.let { songName ->
-                AlbumArt(songUri = currentSongUri)
-
-                Spacer(Modifier.height(16.dp))
-
-                Text(
-                    text = songName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Slider(
-                    value = playbackPosition.toFloat(),
-                    onValueChange = { newValue ->
-                        playbackPosition = newValue.toInt()
-                    },
-                    onValueChangeFinished = {
-                        mediaController?.seekTo(playbackPosition.toLong())
+        PlayerScreen(
+            modifier = modifier,
+            songName = currentSongName,
+            songUri = currentSongUri,
+            isPlaying = isPlaying,
+            playbackPosition = playbackPosition,
+            playbackDuration = playbackDuration,
+            isShuffleEnabled = isShuffleEnabled,
+            selectedRepeatMode = selectedRepeatMode,
+            onBack = {
+                showPlayerScreen = false
+            },
+            onSeekChange = { newPosition ->
+                playbackPosition = newPosition
+            },
+            onSeekFinished = {
+                mediaController?.seekTo(playbackPosition.toLong())
+                savePlaybackState()
+            },
+            onPrevious = {
+                val index = currentSongIndex ?: return@PlayerScreen
+                if (index > 0) {
+                    playSong(index - 1)
+                }
+            },
+            onPlayPause = {
+                mediaController?.let { controller ->
+                    if (controller.isPlaying) {
+                        controller.pause()
                         savePlaybackState()
-                    },
-                    valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                Spacer(Modifier.height(16.dp))
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    val i = currentSongIndex ?: return@IconButton
-                    if (i > 0) playSong(i - 1)
-                }) {
-                    Icon(Icons.Filled.SkipPrevious, "Previous")
-                }
-
-                IconButton(onClick = {
-                    mediaController?.let { controller ->
-                        if (controller.isPlaying) {
-                            controller.pause()
-                            savePlaybackState()
-                        } else {
-                            controller.play()
-                        }
+                    } else {
+                        controller.play()
                     }
-                }) {
-                    Icon(
-                        if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        "Play/Pause"
-                    )
                 }
-
-                IconButton(onClick = {
-                    val i = currentSongIndex ?: return@IconButton
-                    if (i < files.size - 1) playSong(i + 1)
-                }) {
-                    Icon(Icons.Filled.SkipNext, "Next")
+            },
+            onNext = {
+                val index = currentSongIndex ?: return@PlayerScreen
+                if (index < files.size - 1) {
+                    playSong(index + 1)
                 }
-            }
+            },
+            onToggleShuffle = {
+                isShuffleEnabled = !isShuffleEnabled
+                mediaController?.shuffleModeEnabled = isShuffleEnabled
+            },
+            onChangeRepeatMode = {
+                selectedRepeatMode = (selectedRepeatMode + 1) % 3
 
-            Spacer(Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = {
-                    isShuffleEnabled = !isShuffleEnabled
-                    mediaController?.shuffleModeEnabled = isShuffleEnabled
-                }) {
-                    Text(if (isShuffleEnabled) "Shuffle ON" else "Shuffle OFF")
-                }
-
-                Spacer(Modifier.width(8.dp))
-
-                TextButton(onClick = {
-                    selectedRepeatMode = (selectedRepeatMode + 1) % 3
-
-                    mediaController?.repeatMode = when (selectedRepeatMode) {
-                        1 -> Player.REPEAT_MODE_ONE
-                        2 -> Player.REPEAT_MODE_ALL
-                        else -> Player.REPEAT_MODE_OFF
-                    }
-                }) {
-                    Text(
-                        when (selectedRepeatMode) {
-                            1 -> "Repeat ONE"
-                            2 -> "Repeat ALL"
-                            else -> "Repeat OFF"
-                        }
-                    )
+                mediaController?.repeatMode = when (selectedRepeatMode) {
+                    1 -> Player.REPEAT_MODE_ONE
+                    2 -> Player.REPEAT_MODE_ALL
+                    else -> Player.REPEAT_MODE_OFF
                 }
             }
-        }
+        )
     }
 }
