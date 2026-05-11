@@ -53,7 +53,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var searchQuery by remember { mutableStateOf("") }
-    var sortMode by remember { mutableStateOf("Name A-Z") }
+    var sortMode by remember {
+        mutableStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getString("sort_mode", "Name A-Z") ?: "Name A-Z"
+        )
+    }
 
 
     var savedSongUri by remember {
@@ -230,6 +236,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             },
             onSortModeChange = { newSortMode ->
                 sortMode = newSortMode
+
+                context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                    putString("sort_mode", newSortMode)
+                }
             },
             onPickFolder = { openFolderPicker() },
             onPlaySong = { index ->
