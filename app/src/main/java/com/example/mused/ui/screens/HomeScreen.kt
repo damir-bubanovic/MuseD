@@ -218,6 +218,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             selectedFolderUri = selectedFolderUri,
             files = files,
             currentSongIndex = currentSongIndex,
+            currentSongName = currentSongName,
+            currentSongUri = currentSongUri,
+            isPlaying = isPlaying,
             searchQuery = searchQuery,
             onSearchChange = { newSearchQuery ->
                 searchQuery = newSearchQuery
@@ -226,6 +229,19 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             onPlaySong = { index ->
                 playSong(index)
                 showPlayerScreen = true
+            },
+            onOpenPlayer = {
+                showPlayerScreen = true
+            },
+            onPlayPause = {
+                mediaController?.let { controller ->
+                    if (controller.isPlaying) {
+                        controller.pause()
+                        savePlaybackState()
+                    } else {
+                        controller.play()
+                    }
+                }
             }
         )
     } else {

@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.example.mused.R
+import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatFolderName
 
 @Composable
@@ -26,10 +30,15 @@ fun LibraryScreen(
     selectedFolderUri: String?,
     files: List<String>,
     currentSongIndex: Int?,
+    currentSongName: String?,
+    currentSongUri: String?,
+    isPlaying: Boolean,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
     onPickFolder: () -> Unit,
-    onPlaySong: (Int) -> Unit
+    onPlaySong: (Int) -> Unit,
+    onOpenPlayer: () -> Unit,
+    onPlayPause: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -92,7 +101,9 @@ fun LibraryScreen(
         Spacer(Modifier.height(12.dp))
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             itemsIndexed(filteredFiles) { _, fileUri ->
@@ -143,6 +154,52 @@ fun LibraryScreen(
                             else
                                 MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+
+        if (currentSongName != null) {
+            Spacer(Modifier.height(10.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenPlayer() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AlbumArt(
+                        songUri = currentSongUri,
+                        modifier = Modifier.size(48.dp)
+                    )
+
+                    Spacer(Modifier.width(12.dp))
+
+                    Text(
+                        text = currentSongName,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1
+                    )
+
+                    IconButton(onClick = onPlayPause) {
+                        Icon(
+                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

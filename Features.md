@@ -2,21 +2,29 @@
 
 ## Goal
 
-MUSED is an offline Android music player that plays local files from a selected folder, supports background playback, and automatically resumes from the last position.
+MUSED is a modern offline Android music player focused on local music playback, clean UI, persistent playback state, and smooth background listening experience.
+
+Built using:
+
+* Kotlin
+* Jetpack Compose
+* Media3 / ExoPlayer
+* MediaSessionService
+* Storage Access Framework (SAF)
 
 ---
 
-## Chapter 1: Local Music Folder ✅
+# Chapter 1: Local Music Folder ✅
 
-**Implemented:**
+## Implemented
 
-* User selects a folder via system picker (Storage Access Framework)
+* User selects music folder via system picker (SAF)
 * App scans and loads supported audio files
-* Works fully offline
-* Folder is persisted across app restarts
+* Fully offline playback
+* Folder persists across app restarts
 * User can change folder anytime
 
-**Supported formats:**
+## Supported Formats
 
 * .mp3
 * .wav
@@ -26,159 +34,244 @@ MUSED is an offline Android music player that plays local files from a selected 
 
 ---
 
-## Chapter 2: Song List ✅
+# Chapter 2: Song Library ✅
 
-**Implemented:**
+## Implemented
 
 * Displays songs from selected folder
-* Shows currently playing song (highlight + indicator)
-* Click to play any song
-* Auto-updates when folder changes
-* Default sorting: file name (system order)
+* Scrollable song list
+* Current playing song highlighting
+* Click any song to start playback
+* Auto-refresh after folder changes
+* Search filtering by song name
+* Styled card-based song rows
+* Mini player at bottom of library screen
 
-**Planned:**
+## Current Sorting
 
-* Sorting (name, date, duration)
-* Shuffle mode
-* Search
+* System / file order
+
+## Planned
+
+* Sorting by:
+  * Name
+  * Date
+  * Duration
 
 ---
 
-## Chapter 3: Playback Controls ✅
+# Chapter 3: Playback System ✅
 
-**Implemented (Media3-based):**
+## Implemented (Media3-based)
 
 * Play / Pause
 * Next / Previous
-* Auto-play next track
 * Playlist queue (entire folder)
-* Background playback via `MediaSessionService`
+* Auto-play next track
+* Seek bar support
+* Smooth seeking
+* Background playback
+* MediaSession integration
 
-**UI:**
+## UI Features
 
-* Icon-based controls (Material icons)
-* Seek bar (draggable)
+* Material icon controls
 * Time display (mm:ss / mm:ss)
+* Shuffle mode
+* Repeat modes:
+  * Off
+  * Repeat One
+  * Repeat All
 
 ---
 
-## Chapter 4: Playback State Persistence ✅
+# Chapter 4: Playback Persistence ✅
 
-**Stored:**
+## Stored
 
 * Selected folder URI
 * Current song URI
 * Playback position
+* Current playlist state
 
-**Behavior:**
+## Behavior
 
-* State saved on pause/play interactions
-* Position updated after seeking
-* Safe handling if file is missing
-
----
-
-## Chapter 5: Auto Resume on App Start ✅
-
-**Implemented:**
-
-* App automatically resumes last song and position
-* No manual “Resume” button required
-
-**Flow:**
-
-Open app → files load → auto resume (if valid)
-
-**Safety:**
-
-* If song exists → resume
-* If missing → ignore safely (no crash)
+* Playback state saved automatically
+* Position restored after app restart
+* Resume after seeking
+* Safe handling for missing files
 
 ---
 
-## Chapter 6: Folder Changes ✅
+# Chapter 5: Auto Resume ✅
 
-**Implemented behavior:**
+## Implemented
 
-* Selecting a new folder reloads song list
-* Playback resets to new context
-* Auto-resume only runs if saved song exists in new list
+* App automatically restores:
+  * last song
+  * playback position
+  * playlist context
 
-**Handling edge cases:**
+## Flow
 
-* Deleted song → ignored
-* Replaced files → treated as new playlist
-* Invalid saved URI → safely skipped
+App launch → files load → restore playback state
+
+## Safety
+
+* Missing song → safely ignored
+* Invalid URI → skipped without crash
 
 ---
 
-## Chapter 7: System & Lock Screen Controls ✅
+# Chapter 6: Folder Management ✅
 
-**Implemented:**
+## Implemented
 
-* Notification media player
+* Switching folders reloads library
+* Playback updates to new folder context
+* Auto-resume validates song existence
+* Safe handling for deleted/replaced files
+
+---
+
+# Chapter 7: Background Playback & System Controls ✅
+
+## Implemented
+
+* Notification media controls
 * Lock screen controls
-* Background playback (app can be closed)
-* Media buttons supported:
-
+* Background playback while app closed
+* Media button support:
   * Play / Pause
   * Next
   * Previous
 
-**Powered by:**
+## Powered By
 
-Media3 + MediaSessionService + ExoPlayer
+* Media3
+* MediaSessionService
+* ExoPlayer
 
 ---
 
-## Chapter 8: Earbuds / External Controls (Partial) 🟡
+# Chapter 8: Earbuds & External Controls 🟡
 
-**Working:**
+## Working
 
-* Basic playback via system audio routing
-* MediaSession enables external control compatibility
+* Basic external playback compatibility
+* MediaSession integration
 
-**Planned:**
+## Planned
 
-* Play/Pause via earbuds
-* Next/Previous via hardware buttons
+* Earbud play/pause support
+* Hardware next/previous support
 * Auto-pause on disconnect
 
 ---
 
-## Chapter 9: Offline Only ✅
+# Chapter 9: Album Art & Metadata ✅
+
+## Implemented
+
+* Embedded album art extraction
+* Album art displayed:
+  * in player screen
+  * mini player
+  * notifications
+  * lock screen
+
+## Metadata
+
+* Song title support
+* Artist metadata support ("MUSED")
+
+---
+
+# Chapter 10: Offline-Only Philosophy ✅
 
 * No internet usage
 * No streaming
 * No accounts
-* All files are local
+* No cloud dependency
+* All playback is local
 
 ---
 
-## Chapter 10: Permissions ✅
+# Chapter 11: Permissions & Privacy ✅
 
-* Uses system folder picker (SAF)
-* Access limited to selected folder only
+## Implemented
+
+* SAF-based folder access
 * No broad storage permission required
+* Access limited to selected folder only
 
 ---
 
-## Chapter 11: UI / Player Experience ✅
+# Chapter 12: UI / UX Redesign ✅
 
-**Implemented:**
+## Implemented
 
-* Clean layout (Compose)
-* Highlight current song
-* Icon-based controls
-* Seek bar
-* Formatted time display
-* Scrollable song list
+* Custom MuseD branding
+* Custom launcher icon
+* Red theme styling
+* Styled library cards
+* Improved typography
+* Modern spacing/layout
+* Styled player screen
+* Styled mini player
+* Current-song highlighting
+* Responsive Compose UI
 
 ---
 
-## Chapter 12: Version 1 Scope (ACHIEVED + EXPANDED)
+# Chapter 13: Mini Player ✅
 
-### Originally planned:
+## Implemented
+
+Mini player shown inside library screen:
+
+* Album art
+* Song title
+* Play / Pause button
+* Tap to reopen player screen
+
+---
+
+# Chapter 14: Search System ✅
+
+## Implemented
+
+* Real-time filtering by song name
+* Case-insensitive matching
+
+---
+
+# Chapter 15: Architecture & Stack ✅
+
+## Current Architecture
+
+* Jetpack Compose UI
+* Media3 playback engine
+* MediaSessionService background service
+* SharedPreferences persistence
+* SAF file access
+
+## Current Refactors
+
+* Playback metadata extraction moved out of UI
+* Media item building separated into helper layer
+
+## Planned Refactors
+
+* ViewModel architecture
+* Dedicated playback manager
+* Better state separation
+
+---
+
+# Version 1 Scope — ACHIEVED ✅
+
+## Original Goals
 
 1. Select folder ✔
 2. Display songs ✔
@@ -187,7 +280,7 @@ Media3 + MediaSessionService + ExoPlayer
 5. Auto next ✔
 6. Save/restore playback ✔
 
-### Now additionally implemented:
+## Expanded Features
 
 7. Background playback ✔
 8. Notification controls ✔
@@ -195,74 +288,113 @@ Media3 + MediaSessionService + ExoPlayer
 10. Auto resume ✔
 11. Seek bar ✔
 12. Playlist queue ✔
+13. Album art ✔
+14. Shuffle / Repeat ✔
+15. Search ✔
+16. Styled UI ✔
+17. Mini player ✔
 
 ---
 
-# 🚀 Next Features (Not Yet Implemented)
+# 🚀 Version 2 Roadmap
 
-## High Impact (Recommended Next)
+## High Priority
 
-### 1. Album Art
+### 1. Sorting System
 
-* Show in app
-* Show in notification
-* Show on lock screen
-
----
-
-### 2. Shuffle / Repeat
-
-* Shuffle playlist
-* Repeat one / all
+* Sort by:
+  * Name
+  * Date
+  * Duration
 
 ---
 
-### 3. Better UI
+### 2. Favorites System
 
-* Card-style song rows
-* Improved spacing & typography
-* Larger touch targets
-
----
-
-### 4. Seek Bar Improvements
-
-* Show buffered progress
-* Smooth dragging
+* Mark favorite songs
+* Favorites playlist
+* Persistent favorites storage
 
 ---
 
-## Medium Priority
+### 3. Playlist Support
 
-### 5. Search
-
-* Filter songs by name
-
-### 6. Sorting
-
-* Name / date / duration
-
-### 7. Folder memory improvements
-
-* Multiple folders support
+* Create playlists
+* Save playlists
+* Edit playlists
 
 ---
 
-## Advanced / Architecture
+### 4. Queue System
 
-### 8. Refactor player logic out of UI
-
-* Move playback logic into dedicated layer (ViewModel / Manager)
+* Up Next queue
+* Reorder queue
+* Remove songs from queue
 
 ---
 
-## Summary
+## UI / UX Improvements
 
-MUSED is now a fully functional offline music player with:
+### 5. Animations
 
-* folder-based playback
-* persistent state
-* background + lock screen control
-* modern Media3 architecture
+* Screen transitions
+* Mini player animations
+* Playback animations
 
-This is portfolio-level Android work.
+---
+
+### 6. Settings Screen
+
+* Theme settings
+* Playback behavior
+* Library options
+
+---
+
+### 7. Better Dark Mode
+
+* OLED-friendly colors
+* Enhanced contrast
+
+---
+
+## Advanced Features
+
+### 8. Multiple Folder Support
+
+* Combine multiple music folders
+* Persistent multi-library support
+
+---
+
+### 9. Visualizer / Equalizer
+
+* Audio visualizer
+* Equalizer support
+
+---
+
+### 10. Architecture Refactor
+
+* ViewModel migration
+* State management cleanup
+* Better service/UI separation
+
+---
+
+# Summary
+
+MUSED is now a portfolio-level offline Android music player featuring:
+
+* Local folder-based playback
+* Background playback
+* Notification & lock screen controls
+* Persistent playback restoration
+* Album art support
+* Search functionality
+* Shuffle & repeat
+* Mini player
+* Modern Compose UI
+* Media3 architecture
+
+The app has evolved beyond a simple prototype and is now entering Version 2 feature development.
