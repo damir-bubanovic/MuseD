@@ -53,6 +53,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var searchQuery by remember { mutableStateOf("") }
+    var sortMode by remember { mutableStateOf("Name A-Z") }
+
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -222,8 +224,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             currentSongUri = currentSongUri,
             isPlaying = isPlaying,
             searchQuery = searchQuery,
+            sortMode = sortMode,
             onSearchChange = { newSearchQuery ->
                 searchQuery = newSearchQuery
+            },
+            onSortModeChange = { newSortMode ->
+                sortMode = newSortMode
             },
             onPickFolder = { openFolderPicker() },
             onPlaySong = { index ->

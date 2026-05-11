@@ -34,7 +34,9 @@ fun LibraryScreen(
     currentSongUri: String?,
     isPlaying: Boolean,
     searchQuery: String,
+    sortMode: String,
     onSearchChange: (String) -> Unit,
+    onSortModeChange: (String) -> Unit,
     onPickFolder: () -> Unit,
     onPlaySong: (Int) -> Unit,
     onOpenPlayer: () -> Unit,
@@ -45,6 +47,24 @@ fun LibraryScreen(
     val filteredFiles = files.filter { fileUri ->
         val name = DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
         name.contains(searchQuery, ignoreCase = true)
+    }
+
+    val sortedFiles = when (sortMode) {
+        "Name Z-A" -> filteredFiles.sortedByDescending { fileUri ->
+            DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
+        }
+
+        "Newest First" -> filteredFiles.sortedByDescending { fileUri ->
+            DocumentFile.fromSingleUri(context, fileUri.toUri())?.lastModified() ?: 0L
+        }
+
+        "Oldest First" -> filteredFiles.sortedBy { fileUri ->
+            DocumentFile.fromSingleUri(context, fileUri.toUri())?.lastModified() ?: 0L
+        }
+
+        else -> filteredFiles.sortedBy { fileUri ->
+            DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
+        }
     }
 
     Column(
@@ -98,6 +118,56 @@ fun LibraryScreen(
             singleLine = true
         )
 
+        Spacer(Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Sort:",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.width(8.dp))
+
+            SortButton(
+                label = "Name A-Z",
+                selected = sortMode == "Name A-Z",
+                onClick = { onSortModeChange("Name A-Z") }
+            )
+
+            Spacer(Modifier.width(6.dp))
+
+            SortButton(
+                label = "Name Z-A",
+                selected = sortMode == "Name Z-A",
+                onClick = { onSortModeChange("Name Z-A") }
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SortButton(
+                label = "Newest First",
+                selected = sortMode == "Newest First",
+                onClick = { onSortModeChange("Newest First") }
+            )
+
+            Spacer(Modifier.width(6.dp))
+
+            SortButton(
+                label = "Oldest First",
+                selected = sortMode == "Oldest First",
+                onClick = { onSortModeChange("Oldest First") }
+            )
+        }
+
         Spacer(Modifier.height(12.dp))
 
         LazyColumn(
@@ -106,7 +176,7 @@ fun LibraryScreen(
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            itemsIndexed(filteredFiles) { _, fileUri ->
+            itemsIndexed(sortedFiles) { _, fileUri ->
                 val index = files.indexOf(fileUri)
                 val name =
                     DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
@@ -205,5 +275,27 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SortButton(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = if (selected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    ) {
+        Text(
+            text = label,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
