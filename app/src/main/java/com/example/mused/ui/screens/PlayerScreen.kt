@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatTime
@@ -43,14 +44,20 @@ fun PlayerScreen(
             Text("Back")
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         songName?.let { currentSongName ->
             AlbumArt(songUri = songUri)
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
 
-            Text(currentSongName)
+            Text(
+                text = currentSongName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(12.dp))
 
             Slider(
                 value = playbackPosition.toFloat(),
@@ -62,49 +69,66 @@ fun PlayerScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}")
+            Text(
+                text = "${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}",
+                style = MaterialTheme.typography.bodySmall
+            )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
 
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onPrevious) {
-                    Icon(Icons.Filled.SkipPrevious, "Previous")
+                    Icon(
+                        Icons.Filled.SkipPrevious,
+                        contentDescription = "Previous",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 IconButton(onClick = onPlayPause) {
                     Icon(
                         if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        "Play/Pause"
+                        contentDescription = "Play/Pause",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
                     )
                 }
 
                 IconButton(onClick = onNext) {
-                    Icon(Icons.Filled.SkipNext, "Next")
+                    Icon(
+                        Icons.Filled.SkipNext,
+                        contentDescription = "Next",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onToggleShuffle) {
-                    Text(if (isShuffleEnabled) "Shuffle ON" else "Shuffle OFF")
+                    Text(
+                        text = if (isShuffleEnabled) "Shuffle ON" else "Shuffle OFF",
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 Spacer(Modifier.width(8.dp))
 
                 TextButton(onClick = onChangeRepeatMode) {
                     Text(
-                        when (selectedRepeatMode) {
+                        text = when (selectedRepeatMode) {
                             1 -> "Repeat ONE"
                             2 -> "Repeat ALL"
                             else -> "Repeat OFF"
-                        }
+                        },
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
