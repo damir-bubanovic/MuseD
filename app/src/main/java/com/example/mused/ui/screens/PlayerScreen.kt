@@ -1,13 +1,16 @@
 package com.example.mused.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +28,8 @@ fun PlayerScreen(
     playbackDuration: Int,
     isShuffleEnabled: Boolean,
     selectedRepeatMode: Int,
+    queueSongs: List<String>,
+    currentSongIndex: Int?,
     onBack: () -> Unit,
     onSeekChange: (Int) -> Unit,
     onSeekFinished: () -> Unit,
@@ -32,8 +37,11 @@ fun PlayerScreen(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onToggleShuffle: () -> Unit,
-    onChangeRepeatMode: () -> Unit
+    onChangeRepeatMode: () -> Unit,
+    onQueueSongClick: (Int) -> Unit
 ) {
+    var showQueue by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -130,6 +138,54 @@ fun PlayerScreen(
                         },
                         color = MaterialTheme.colorScheme.primary
                     )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(onClick = { showQueue = !showQueue }) {
+                Text(
+                    text = if (showQueue) "Hide Queue" else "Show Queue",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            if (showQueue) {
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Up Next",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    itemsIndexed(queueSongs) { index, queueSong ->
+                        val isCurrent = index == currentSongIndex
+
+                        Text(
+                            text = if (isCurrent) "▶ $queueSong" else queueSong,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onQueueSongClick(index) }
+                                .padding(vertical = 8.dp),
+                            color = if (isCurrent)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (isCurrent)
+                                FontWeight.Bold
+                            else
+                                FontWeight.Normal,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }

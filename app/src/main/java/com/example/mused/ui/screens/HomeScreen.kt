@@ -270,6 +270,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             playbackDuration = playbackDuration,
             isShuffleEnabled = isShuffleEnabled,
             selectedRepeatMode = selectedRepeatMode,
+            queueSongs = files.map { fileUri ->
+                DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
+            },
+            currentSongIndex = currentSongIndex,
             onBack = {
                 showPlayerScreen = false
             },
@@ -314,6 +318,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     2 -> Player.REPEAT_MODE_ALL
                     else -> Player.REPEAT_MODE_OFF
                 }
+            },
+            onQueueSongClick = { index ->
+                playSong(index)
             }
         )
     }
