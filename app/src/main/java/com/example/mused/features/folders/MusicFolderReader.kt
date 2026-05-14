@@ -9,16 +9,22 @@ fun loadMusicFilesFromFolder(
     folderUriString: String
 ): List<String> {
     val documentFile = DocumentFile.fromTreeUri(context, folderUriString.toUri())
+        ?: return emptyList()
 
-    return documentFile
-        ?.listFiles()
-        ?.filter { it.isFile }
-        ?.filter { file ->
-            val name = file.name?.lowercase() ?: ""
-            isSupportedAudioFile(name)
+    return collectMusicFiles(documentFile)
+}
+
+private fun collectMusicFiles(folder: DocumentFile): List<String> {
+    return folder.listFiles().flatMap { file ->
+        when {
+            file.isDirectory -> collectMusicFiles(file)
+
+            file.isFile && isSupportedAudioFile(file.name?.lowercase() ?: "") ->
+                listOf(file.uri.toString())
+
+            else -> emptyList()
         }
-        ?.map { file -> file.uri.toString() }
-        ?: emptyList()
+    }
 }
 
 private fun isSupportedAudioFile(fileName: String): Boolean {
