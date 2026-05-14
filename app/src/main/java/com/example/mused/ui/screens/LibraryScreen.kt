@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -27,7 +28,7 @@ import com.example.mused.utils.formatFolderName
 @Composable
 fun LibraryScreen(
     modifier: Modifier = Modifier,
-    selectedFolderUri: String?,
+    selectedFolderUris: List<String>,
     files: List<String>,
     currentSongIndex: Int?,
     currentSongName: String?,
@@ -38,6 +39,7 @@ fun LibraryScreen(
     onSearchChange: (String) -> Unit,
     onSortModeChange: (String) -> Unit,
     onPickFolder: () -> Unit,
+    onRemoveFolder: (String) -> Unit,
     onPlaySong: (Int) -> Unit,
     onOpenPlayer: () -> Unit,
     onPlayPause: () -> Unit
@@ -95,19 +97,57 @@ fun LibraryScreen(
         Spacer(Modifier.height(16.dp))
 
         Button(onClick = onPickFolder) {
-            Text("Select Music Folder")
+            Text("Add Music Folder")
         }
 
         Spacer(Modifier.height(12.dp))
 
-        selectedFolderUri?.let { folderUri ->
+        if (selectedFolderUris.isNotEmpty()) {
             Text(
-                text = "Folder: ${formatFolderName(folderUri)}",
+                text = "Folders:",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(6.dp))
+
+            selectedFolderUris.forEach { folderUri ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatFolderName(folderUri),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+
+                        IconButton(onClick = { onRemoveFolder(folderUri) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Remove folder",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
         }
 
         OutlinedTextField(

@@ -15,12 +15,16 @@ fun loadMusicFilesFromFolder(
         ?.filter { it.isFile }
         ?.filter { file ->
             val name = file.name?.lowercase() ?: ""
-            name.endsWith(".mp3") ||
-                    name.endsWith(".wav") ||
-                    name.endsWith(".m4a") ||
-                    name.endsWith(".flac") ||
-                    name.endsWith(".ogg")
+            isSupportedAudioFile(name)
         }
         ?.map { file -> file.uri.toString() }
         ?: emptyList()
+}
+
+private fun isSupportedAudioFile(fileName: String): Boolean {
+    return fileName.endsWith(".mp3") ||
+            fileName.endsWith(".wav") ||
+            fileName.endsWith(".m4a") ||
+            fileName.endsWith(".flac") ||
+            fileName.endsWith(".ogg")
 }

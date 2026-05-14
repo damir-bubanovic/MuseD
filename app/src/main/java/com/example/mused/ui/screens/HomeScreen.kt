@@ -14,7 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.mused.features.folders.loadMusicFilesFromFolder
+import com.example.mused.features.folders.loadMusicFilesFromFolders
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
@@ -29,11 +29,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var showPlayerScreen by remember { mutableStateOf(false) }
 
-    var selectedFolderUri by remember {
+    var selectedFolderUris by remember {
         mutableStateOf(
             context
                 .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getString("selected_folder_uri", null)
+                .getStringSet("selected_folder_uris", emptySet())
+                ?.toList()
+                ?: emptyList()
         )
     }
 
@@ -139,10 +141,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(selectedFolderUri) {
-        selectedFolderUri?.let { folderUri ->
-            files = loadMusicFilesFromFolder(context, folderUri)
-        }
+    LaunchedEffect(selectedFolderUris) {
+        files = loadMusicFilesFromFolders(context, selectedFolderUris)
     }
 
     fun savePlaybackState() {
@@ -208,22 +208,22 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     val openFolderPicker = rememberFolderPickerLauncher { folderUri ->
-        selectedFolderUri = folderUri
+        if (folderUri == null) return@rememberFolderPickerLauncher
+
+        selectedFolderUris = (selectedFolderUris + folderUri).distinct()
         hasAutoResumed = false
 
         context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
-            putString("selected_folder_uri", selectedFolderUri)
+            putStringSet("selected_folder_uris", selectedFolderUris.toSet())
         }
 
-        folderUri?.let { selectedUri ->
-            files = loadMusicFilesFromFolder(context, selectedUri)
-        }
+        files = loadMusicFilesFromFolders(context, selectedFolderUris)
     }
 
     if (!showPlayerScreen) {
         LibraryScreen(
             modifier = modifier,
-            selectedFolderUri = selectedFolderUri,
+            selectedFolderUris = selectedFolderUris,
             files = files,
             currentSongIndex = currentSongIndex,
             currentSongName = currentSongName,
@@ -242,6 +242,16 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 }
             },
             onPickFolder = { openFolderPicker() },
+            onRemoveFolder = { folderUriToRemove ->
+                selectedFolderUris = selectedFolderUris.filter { it != folderUriToRemove }
+                hasAutoResumed = false
+
+                context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                    putStringSet("selected_folder_uris", selectedFolderUris.toSet())
+                }
+
+                files = loadMusicFilesFromFolders(context, selectedFolderUris)
+            },
             onPlaySong = { index ->
                 playSong(index)
                 showPlayerScreen = true
