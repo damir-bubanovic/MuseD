@@ -29,6 +29,10 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mused.R
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatFolderName
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.runtime.getValue
+
 
 @Composable
 fun LibraryScreen(
@@ -242,19 +246,30 @@ fun LibraryScreen(
                     DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
                 val isCurrentSong = index == currentSongIndex
 
+                val animatedCardColor by animateColorAsState(
+                    targetValue = if (isCurrentSong)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant,
+                    label = "SongRowColorAnimation"
+                )
+
+                val animatedElevation by animateDpAsState(
+                    targetValue = if (isCurrentSong) 4.dp else 1.dp,
+                    label = "SongRowElevationAnimation"
+                )
+
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onPlaySong(index) },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isCurrentSong)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = animatedCardColor
                     ),
                     elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (isCurrentSong) 4.dp else 1.dp
+                        defaultElevation = animatedElevation
                     )
                 ) {
                     Row(
