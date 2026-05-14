@@ -38,7 +38,7 @@ Built using:
 
 ## Implemented
 
-* Displays songs from selected folder
+* Displays songs from selected folders
 * Scrollable song list
 * Current playing song highlighting
 * Click any song to start playback
@@ -46,17 +46,21 @@ Built using:
 * Search filtering by song name
 * Styled card-based song rows
 * Mini player at bottom of library screen
+* Multiple folder support
+* Folder removal support
 
-## Current Sorting
+## Sorting System ✅
 
-* System / file order
+### Implemented
 
-## Planned
+* Name A-Z
+* Name Z-A
+* Newest First
+* Oldest First
 
-* Sorting by:
-  * Name
-  * Date
-  * Duration
+### Persistence
+
+* Sort mode saved across app restarts
 
 ---
 
@@ -66,7 +70,7 @@ Built using:
 
 * Play / Pause
 * Next / Previous
-* Playlist queue (entire folder)
+* Playlist queue (entire library)
 * Auto-play next track
 * Seek bar support
 * Smooth seeking
@@ -89,10 +93,11 @@ Built using:
 
 ## Stored
 
-* Selected folder URI
+* Selected folder URIs
 * Current song URI
 * Playback position
 * Current playlist state
+* Sort mode
 
 ## Behavior
 
@@ -127,8 +132,11 @@ App launch → files load → restore playback state
 
 ## Implemented
 
-* Switching folders reloads library
-* Playback updates to new folder context
+* Multiple folder support
+* Combined library loading
+* Folder removal
+* Duplicate folder prevention
+* Playback updates to current library state
 * Auto-resume validates song existence
 * Safe handling for deleted/replaced files
 
@@ -203,7 +211,7 @@ App launch → files load → restore playback state
 
 * SAF-based folder access
 * No broad storage permission required
-* Access limited to selected folder only
+* Access limited to selected folders only
 
 ---
 
@@ -246,7 +254,35 @@ Mini player shown inside library screen:
 
 ---
 
-# Chapter 15: Architecture & Stack ✅
+# Chapter 15: Queue System ✅
+
+## Implemented
+
+* Up Next queue view
+* Queue shown inside player screen
+* Tap queue item to instantly play song
+* Current song highlighting inside queue
+
+---
+
+# Chapter 16: Settings Screen ✅
+
+## Implemented
+
+### Library Settings
+
+* Clear all folders
+* Clear playback state
+
+### Information
+
+* Current sort mode display
+* About screen
+* Version display
+
+---
+
+# Chapter 17: Architecture & Stack ✅
 
 ## Current Architecture
 
@@ -260,6 +296,7 @@ Mini player shown inside library screen:
 
 * Playback metadata extraction moved out of UI
 * Media item building separated into helper layer
+* Folder loading separated into reusable readers
 
 ## Planned Refactors
 
@@ -293,6 +330,10 @@ Mini player shown inside library screen:
 15. Search ✔
 16. Styled UI ✔
 17. Mini player ✔
+18. Sorting system ✔
+19. Queue system ✔
+20. Multiple folder support ✔
+21. Settings screen ✔
 
 ---
 
@@ -300,42 +341,16 @@ Mini player shown inside library screen:
 
 ## High Priority
 
-### 1. Sorting System
+### 1. Sleep Timer
 
-* Sort by:
-  * Name
-  * Date
-  * Duration
-
----
-
-### 2. Favorites System
-
-* Mark favorite songs
-* Favorites playlist
-* Persistent favorites storage
-
----
-
-### 3. Playlist Support
-
-* Create playlists
-* Save playlists
-* Edit playlists
-
----
-
-### 4. Queue System
-
-* Up Next queue
-* Reorder queue
-* Remove songs from queue
+* Auto-stop playback
+* Timer presets
 
 ---
 
 ## UI / UX Improvements
 
-### 5. Animations
+### 2. Animations
 
 * Screen transitions
 * Mini player animations
@@ -343,38 +358,43 @@ Mini player shown inside library screen:
 
 ---
 
-### 6. Settings Screen
-
-* Theme settings
-* Playback behavior
-* Library options
-
----
-
-### 7. Better Dark Mode
+### 3. Better Dark Mode
 
 * OLED-friendly colors
 * Enhanced contrast
 
 ---
 
-## Advanced Features
+### 4. Dynamic Themes
 
-### 8. Multiple Folder Support
-
-* Combine multiple music folders
-* Persistent multi-library support
+* Material You support
+* Theme customization
 
 ---
 
-### 9. Visualizer / Equalizer
+## Advanced Features
+
+### 5. Equalizer / Visualizer
 
 * Audio visualizer
 * Equalizer support
 
 ---
 
-### 10. Architecture Refactor
+### 6. Recursive Folder Scanning
+
+* Detect music inside subfolders
+
+---
+
+### 7. Performance Optimization
+
+* Faster loading for large libraries
+* Metadata caching
+
+---
+
+### 8. Architecture Refactor
 
 * ViewModel migration
 * State management cleanup
@@ -386,15 +406,18 @@ Mini player shown inside library screen:
 
 MUSED is now a portfolio-level offline Android music player featuring:
 
-* Local folder-based playback
+* Multi-folder local playback
 * Background playback
 * Notification & lock screen controls
 * Persistent playback restoration
 * Album art support
 * Search functionality
+* Sorting system
+* Queue system
 * Shuffle & repeat
 * Mini player
+* Settings management
 * Modern Compose UI
 * Media3 architecture
 
-The app has evolved beyond a simple prototype and is now entering Version 2 feature development.
+The app has evolved beyond a simple prototype and is now entering advanced Version 2 development.

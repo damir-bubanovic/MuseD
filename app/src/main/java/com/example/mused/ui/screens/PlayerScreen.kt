@@ -38,9 +38,11 @@ fun PlayerScreen(
     onNext: () -> Unit,
     onToggleShuffle: () -> Unit,
     onChangeRepeatMode: () -> Unit,
-    onQueueSongClick: (Int) -> Unit
+    onQueueSongClick: (Int) -> Unit,
+    onSleepTimerSelected: (Int?) -> Unit,
 ) {
     var showQueue by remember { mutableStateOf(false) }
+    var showSleepTimerOptions by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -138,6 +140,38 @@ fun PlayerScreen(
                         },
                         color = MaterialTheme.colorScheme.primary
                     )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(onClick = { showSleepTimerOptions = !showSleepTimerOptions }) {
+                Text(
+                    text = if (showSleepTimerOptions) "Hide Sleep Timer" else "Sleep Timer",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            if (showSleepTimerOptions) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { onSleepTimerSelected(15) }) {
+                        Text("15 min")
+                    }
+
+                    TextButton(onClick = { onSleepTimerSelected(30) }) {
+                        Text("30 min")
+                    }
+
+                    TextButton(onClick = { onSleepTimerSelected(60) }) {
+                        Text("60 min")
+                    }
+
+                    TextButton(onClick = { onSleepTimerSelected(null) }) {
+                        Text("Off")
+                    }
                 }
             }
 

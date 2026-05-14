@@ -55,6 +55,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var searchQuery by remember { mutableStateOf("") }
+    var sleepTimerMinutes by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
         mutableStateOf(
@@ -158,6 +159,16 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             putInt("current_song_index", currentIndex)
             putInt("current_position_ms", currentPosition)
         }
+    }
+
+    LaunchedEffect(sleepTimerMinutes) {
+        val minutes = sleepTimerMinutes ?: return@LaunchedEffect
+
+        delay(minutes * 60 * 1000L)
+
+        mediaController?.pause()
+        savePlaybackState()
+        sleepTimerMinutes = null
     }
 
     fun clearPlaybackState() {
@@ -392,7 +403,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             },
             onQueueSongClick = { index ->
                 playSong(index)
-            }
+            },
+            onSleepTimerSelected = { minutes ->
+                sleepTimerMinutes = minutes
+            },
         )
     }
 }
