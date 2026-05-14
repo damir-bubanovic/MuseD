@@ -17,7 +17,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatTime
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 
+
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PlayerScreen(
     modifier: Modifier = Modifier,
@@ -100,12 +104,17 @@ fun PlayerScreen(
                 }
 
                 IconButton(onClick = onPlayPause) {
-                    Icon(
-                        if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = "Play/Pause",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp)
-                    )
+                    AnimatedContent(
+                        targetState = isPlaying,
+                        label = "PlayPauseAnimation"
+                    ) { playing ->
+                        Icon(
+                            imageVector = if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = "Play/Pause",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
 
                 IconButton(onClick = onNext) {

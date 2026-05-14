@@ -20,6 +20,12 @@ import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
+import android.media.AudioManager
+
+
 
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(UnstableApi::class)
@@ -158,6 +164,25 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             putString("current_song_uri", currentFileUri)
             putInt("current_song_index", currentIndex)
             putInt("current_position_ms", currentPosition)
+        }
+    }
+
+    DisposableEffect(mediaController) {
+        val noisyReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
+                    mediaController?.pause()
+                    savePlaybackState()
+                }
+            }
+        }
+
+        val intentFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+
+        context.registerReceiver(noisyReceiver, intentFilter)
+
+        onDispose {
+            context.unregisterReceiver(noisyReceiver)
         }
     }
 

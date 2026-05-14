@@ -394,11 +394,50 @@ Mini player shown inside library screen:
 
 ---
 
-### 8. Architecture Refactor
+# Chapter 8: Earbuds & External Controls 🟡
 
-* ViewModel migration
-* State management cleanup
-* Better service/UI separation
+## Working
+
+* Basic external playback compatibility
+* MediaSession integration
+* Bluetooth media button compatibility
+* External play/pause command support
+* Lock screen media command support
+
+## Planned
+
+### Earbud Integration
+
+* Reliable earbud play/pause handling
+* Hardware next/previous support
+* Single-tap media controls
+* Double-tap next track support
+* Triple-tap previous track support
+
+### Smart Pause Features
+
+* Auto-pause on wired headphone disconnect
+* Auto-pause on Bluetooth disconnect
+* Audio route change detection
+* Resume support after reconnect
+
+## Planned Android Integration
+
+### Audio Becoming Noisy Receiver
+
+Will use:
+
+* `AudioManager.ACTION_AUDIO_BECOMING_NOISY`
+
+Purpose:
+
+* Detect wired headphone unplug
+* Detect Bluetooth audio disconnect
+* Automatically pause playback before audio switches to speaker
+
+## Notes
+
+Modern earbuds may also send pause commands directly through MediaSession controls when removed from the ear. MUSED's Media3 + MediaSessionService architecture is designed to support these standard Android media control behaviors.
 
 ---
 
