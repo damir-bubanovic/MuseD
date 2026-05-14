@@ -55,7 +55,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var searchQuery by remember { mutableStateOf("") }
-    var sleepTimerMinutes by remember { mutableStateOf<Int?>(null) }
+    var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
         mutableStateOf(
@@ -161,14 +161,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(sleepTimerMinutes) {
-        val minutes = sleepTimerMinutes ?: return@LaunchedEffect
+    LaunchedEffect(sleepTimerRemainingSeconds) {
+        val remainingSeconds = sleepTimerRemainingSeconds ?: return@LaunchedEffect
 
-        delay(minutes * 60 * 1000L)
+        if (remainingSeconds <= 0) {
+            mediaController?.pause()
+            savePlaybackState()
+            sleepTimerRemainingSeconds = null
+            return@LaunchedEffect
+        }
 
-        mediaController?.pause()
-        savePlaybackState()
-        sleepTimerMinutes = null
+        delay(1000L)
+        sleepTimerRemainingSeconds = remainingSeconds - 1
     }
 
     fun clearPlaybackState() {
@@ -206,6 +210,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         isPlaying = false
         hasAutoResumed = false
         showPlayerScreen = false
+        sleepTimerRemainingSeconds = null
 
         context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
             remove("selected_folder_uris")
@@ -356,6 +361,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
             },
             currentSongIndex = currentSongIndex,
+            sleepTimerRemainingSeconds = sleepTimerRemainingSeconds,
             onBack = {
                 showPlayerScreen = false
             },
@@ -405,8 +411,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 playSong(index)
             },
             onSleepTimerSelected = { minutes ->
-                sleepTimerMinutes = minutes
-            },
+                sleepTimerRemainingSeconds = minutes?.times(60)
+            }
         )
     }
 }

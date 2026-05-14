@@ -30,6 +30,7 @@ fun PlayerScreen(
     selectedRepeatMode: Int,
     queueSongs: List<String>,
     currentSongIndex: Int?,
+    sleepTimerRemainingSeconds: Int?,
     onBack: () -> Unit,
     onSeekChange: (Int) -> Unit,
     onSeekFinished: () -> Unit,
@@ -39,7 +40,7 @@ fun PlayerScreen(
     onToggleShuffle: () -> Unit,
     onChangeRepeatMode: () -> Unit,
     onQueueSongClick: (Int) -> Unit,
-    onSleepTimerSelected: (Int?) -> Unit,
+    onSleepTimerSelected: (Int?) -> Unit
 ) {
     var showQueue by remember { mutableStateOf(false) }
     var showSleepTimerOptions by remember { mutableStateOf(false) }
@@ -173,6 +174,16 @@ fun PlayerScreen(
                         Text("Off")
                     }
                 }
+
+                sleepTimerRemainingSeconds
+                    ?.takeIf { seconds -> seconds <= 60 }
+                    ?.let { seconds ->
+                        Text(
+                            text = "Sleep timer: ${formatTime(seconds * 1000)} remaining",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
             }
 
             Spacer(Modifier.height(8.dp))
