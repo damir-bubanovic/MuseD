@@ -1,5 +1,12 @@
 package com.example.mused.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,9 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatTime
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -209,41 +213,47 @@ fun PlayerScreen(
                 )
             }
 
-            if (showQueue) {
-                Spacer(Modifier.height(8.dp))
+            AnimatedVisibility(
+                visible = showQueue,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    Spacer(Modifier.height(8.dp))
 
-                Text(
-                    text = "Up Next",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                    Text(
+                        text = "Up Next",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(8.dp))
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    itemsIndexed(queueSongs) { index, queueSong ->
-                        val isCurrent = index == currentSongIndex
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        itemsIndexed(queueSongs) { index, queueSong ->
+                            val isCurrent = index == currentSongIndex
 
-                        Text(
-                            text = if (isCurrent) "▶ $queueSong" else queueSong,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onQueueSongClick(index) }
-                                .padding(vertical = 8.dp),
-                            color = if (isCurrent)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurface,
-                            fontWeight = if (isCurrent)
-                                FontWeight.Bold
-                            else
-                                FontWeight.Normal,
-                            maxLines = 1
-                        )
+                            Text(
+                                text = if (isCurrent) "▶ $queueSong" else queueSong,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onQueueSongClick(index) }
+                                    .padding(vertical = 8.dp),
+                                color = if (isCurrent)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                fontWeight = if (isCurrent)
+                                    FontWeight.Bold
+                                else
+                                    FontWeight.Normal,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }

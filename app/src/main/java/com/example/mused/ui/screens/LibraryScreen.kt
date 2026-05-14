@@ -1,5 +1,10 @@
 package com.example.mused.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -285,47 +290,53 @@ fun LibraryScreen(
             }
         }
 
-        if (currentSongName != null) {
-            Spacer(Modifier.height(10.dp))
+        AnimatedVisibility(
+            visible = currentSongName != null,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut()
+        ) {
+            Column {
+                Spacer(Modifier.height(10.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenPlayer() },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-            ) {
-                Row(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .clickable { onOpenPlayer() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                 ) {
-                    AlbumArt(
-                        songUri = currentSongUri,
-                        modifier = Modifier.size(48.dp)
-                    )
-
-                    Spacer(Modifier.width(12.dp))
-
-                    Text(
-                        text = currentSongName,
-                        modifier = Modifier.weight(1f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        maxLines = 1
-                    )
-
-                    IconButton(onClick = onPlayPause) {
-                        Icon(
-                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = "Play/Pause",
-                            tint = MaterialTheme.colorScheme.primary
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AlbumArt(
+                            songUri = currentSongUri,
+                            modifier = Modifier.size(48.dp)
                         )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(
+                            text = currentSongName ?: "",
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1
+                        )
+
+                        IconButton(onClick = onPlayPause) {
+                            Icon(
+                                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                contentDescription = "Play/Pause",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
