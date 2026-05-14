@@ -21,13 +21,13 @@ import com.example.mused.features.player.buildMediaItems
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
-
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var showPlayerScreen by remember { mutableStateOf(false) }
+    var showSettingsScreen by remember { mutableStateOf(false) }
 
     var selectedFolderUris by remember {
         mutableStateOf(
@@ -55,6 +55,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember { mutableIntStateOf(0) }
 
     var searchQuery by remember { mutableStateOf("") }
+
     var sortMode by remember {
         mutableStateOf(
             context
@@ -62,7 +63,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 .getString("sort_mode", "Name A-Z") ?: "Name A-Z"
         )
     }
-
 
     var savedSongUri by remember {
         mutableStateOf(
@@ -160,6 +160,50 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    fun clearPlaybackState() {
+        mediaController?.pause()
+
+        currentSongName = null
+        currentSongIndex = null
+        currentSongUri = null
+        savedSongUri = null
+        savedPosition = 0
+        playbackPosition = 0
+        playbackDuration = 0
+        isPlaying = false
+        showPlayerScreen = false
+
+        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+            remove("current_song_uri")
+            remove("current_song_index")
+            remove("current_position_ms")
+        }
+    }
+
+    fun clearFolders() {
+        mediaController?.pause()
+
+        selectedFolderUris = emptyList()
+        files = emptyList()
+        currentSongName = null
+        currentSongIndex = null
+        currentSongUri = null
+        savedSongUri = null
+        savedPosition = 0
+        playbackPosition = 0
+        playbackDuration = 0
+        isPlaying = false
+        hasAutoResumed = false
+        showPlayerScreen = false
+
+        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+            remove("selected_folder_uris")
+            remove("current_song_uri")
+            remove("current_song_index")
+            remove("current_position_ms")
+        }
+    }
+
     fun playSong(index: Int) {
         if (index !in files.indices) return
 
@@ -220,7 +264,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         files = loadMusicFilesFromFolders(context, selectedFolderUris)
     }
 
-    if (!showPlayerScreen) {
+    if (showSettingsScreen) {
+        SettingsScreen(
+            modifier = modifier,
+            currentSortMode = sortMode,
+            onBack = {
+                showSettingsScreen = false
+            },
+            onClearFolders = {
+                clearFolders()
+            },
+            onClearPlaybackState = {
+                clearPlaybackState()
+            }
+        )
+    } else if (!showPlayerScreen) {
         LibraryScreen(
             modifier = modifier,
             selectedFolderUris = selectedFolderUris,
@@ -268,6 +326,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         controller.play()
                     }
                 }
+            },
+            onOpenSettings = {
+                showSettingsScreen = true
             }
         )
     } else {

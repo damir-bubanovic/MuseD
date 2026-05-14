@@ -42,7 +42,8 @@ fun LibraryScreen(
     onRemoveFolder: (String) -> Unit,
     onPlaySong: (Int) -> Unit,
     onOpenPlayer: () -> Unit,
-    onPlayPause: () -> Unit
+    onPlayPause: () -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -96,8 +97,22 @@ fun LibraryScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        Button(onClick = onPickFolder) {
-            Text("Add Music Folder")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Button(
+                onClick = onPickFolder,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Add Music Folder")
+            }
+
+            OutlinedButton(
+                onClick = onOpenSettings
+            ) {
+                Text("Settings")
+            }
         }
 
         Spacer(Modifier.height(12.dp))
