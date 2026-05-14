@@ -29,13 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import com.example.mused.R
+import com.example.mused.models.SongData
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatFolderName
 
@@ -43,7 +41,7 @@ import com.example.mused.utils.formatFolderName
 fun LibraryScreen(
     modifier: Modifier = Modifier,
     selectedFolderUris: List<String>,
-    files: List<String>,
+    songs: List<SongData>,
     currentSongIndex: Int?,
     currentSongName: String?,
     currentSongUri: String?,
@@ -61,28 +59,25 @@ fun LibraryScreen(
     onPlayPause: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val context = LocalContext.current
-
-    val filteredFiles = files.filter { fileUri ->
-        val name = DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
-        name.contains(searchQuery, ignoreCase = true)
+    val filteredSongs = songs.filter { song ->
+        song.title.contains(searchQuery, ignoreCase = true)
     }
 
-    val sortedFiles = when (sortMode) {
-        "Name Z-A" -> filteredFiles.sortedByDescending { fileUri ->
-            DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
+    val sortedSongs = when (sortMode) {
+        "Name Z-A" -> filteredSongs.sortedByDescending { song ->
+            song.title
         }
 
-        "Newest First" -> filteredFiles.sortedByDescending { fileUri ->
-            DocumentFile.fromSingleUri(context, fileUri.toUri())?.lastModified() ?: 0L
+        "Newest First" -> filteredSongs.sortedByDescending { song ->
+            song.lastModified
         }
 
-        "Oldest First" -> filteredFiles.sortedBy { fileUri ->
-            DocumentFile.fromSingleUri(context, fileUri.toUri())?.lastModified() ?: 0L
+        "Oldest First" -> filteredSongs.sortedBy { song ->
+            song.lastModified
         }
 
-        else -> filteredFiles.sortedBy { fileUri ->
-            DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
+        else -> filteredSongs.sortedBy { song ->
+            song.title
         }
     }
 
@@ -243,10 +238,8 @@ fun LibraryScreen(
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            itemsIndexed(sortedFiles) { _, fileUri ->
-                val index = files.indexOf(fileUri)
-                val name =
-                    DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown"
+            itemsIndexed(sortedSongs) { _, song ->
+                val index = songs.indexOfFirst { it.uri == song.uri }
                 val isCurrentSong = index == currentSongIndex
 
                 val animatedCardColor by animateColorAsState(
@@ -307,7 +300,7 @@ fun LibraryScreen(
                         Spacer(Modifier.width(6.dp))
 
                         Text(
-                            text = name,
+                            text = song.title,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (isCurrentSong)
                                 FontWeight.Bold

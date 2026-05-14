@@ -5,24 +5,20 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.example.mused.models.SongData
 import java.io.ByteArrayOutputStream
 
 fun buildMediaItems(
     context: Context,
-    files: List<String>
+    songs: List<SongData>
 ): List<MediaItem> {
-    return files.map { fileUri ->
-        val itemUri = fileUri.toUri()
-        val itemName =
-            DocumentFile.fromSingleUri(context, itemUri)?.name ?: "Unknown song"
-
-        val artworkBytes = loadArtworkBytes(context, fileUri)
+    return songs.map { song ->
+        val artworkBytes = loadArtworkBytes(context, song.uri)
 
         val metadata = MediaMetadata.Builder()
-            .setTitle(itemName)
+            .setTitle(song.title)
             .setArtist("MUSED")
             .apply {
                 artworkBytes?.let {
@@ -35,7 +31,7 @@ fun buildMediaItems(
             .build()
 
         MediaItem.Builder()
-            .setUri(itemUri)
+            .setUri(song.uri.toUri())
             .setMediaMetadata(metadata)
             .build()
     }

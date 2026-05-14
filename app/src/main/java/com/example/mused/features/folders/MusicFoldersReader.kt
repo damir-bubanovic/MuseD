@@ -1,6 +1,7 @@
 package com.example.mused.features.folders
 
 import android.content.Context
+import com.example.mused.models.SongData
 
 fun loadMusicFilesFromFolders(
     context: Context,
@@ -11,4 +12,17 @@ fun loadMusicFilesFromFolders(
             loadMusicFilesFromFolder(context, folderUri)
         }
         .distinct()
+}
+
+fun loadSongDataFromFolders(
+    context: Context,
+    folderUriStrings: List<String>
+): List<SongData> {
+    return folderUriStrings
+        .flatMap { folderUri ->
+            loadSongDataFromFolder(context, folderUri)
+        }
+        .distinctBy { song ->
+            song.uri
+        }
 }
