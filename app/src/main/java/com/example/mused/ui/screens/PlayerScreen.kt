@@ -62,7 +62,12 @@ fun PlayerScreen(
         Spacer(Modifier.height(24.dp))
 
         songName?.let { currentSongName ->
-            AlbumArt(songUri = songUri)
+            AnimatedContent(
+                targetState = songUri,
+                label = "AlbumArtAnimation"
+            ) { animatedSongUri ->
+                AlbumArt(songUri = animatedSongUri)
+            }
 
             Spacer(Modifier.height(20.dp))
 
