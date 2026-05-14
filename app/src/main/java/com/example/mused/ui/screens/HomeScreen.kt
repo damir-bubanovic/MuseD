@@ -1,8 +1,14 @@
 package com.example.mused.ui.screens
 
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.media.AudioManager
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,15 +26,9 @@ import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
-import android.content.BroadcastReceiver
-import android.content.Intent
-import android.content.IntentFilter
-import android.media.AudioManager
-
-
 
 @Suppress("AssignedValueIsNeverRead")
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -305,139 +305,154 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         files = loadMusicFilesFromFolders(context, selectedFolderUris)
     }
 
-    if (showSettingsScreen) {
-        SettingsScreen(
-            modifier = modifier,
-            currentSortMode = sortMode,
-            onBack = {
-                showSettingsScreen = false
-            },
-            onClearFolders = {
-                clearFolders()
-            },
-            onClearPlaybackState = {
-                clearPlaybackState()
-            }
-        )
-    } else if (!showPlayerScreen) {
-        LibraryScreen(
-            modifier = modifier,
-            selectedFolderUris = selectedFolderUris,
-            files = files,
-            currentSongIndex = currentSongIndex,
-            currentSongName = currentSongName,
-            currentSongUri = currentSongUri,
-            isPlaying = isPlaying,
-            searchQuery = searchQuery,
-            sortMode = sortMode,
-            onSearchChange = { newSearchQuery ->
-                searchQuery = newSearchQuery
-            },
-            onSortModeChange = { newSortMode ->
-                sortMode = newSortMode
-
-                context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
-                    putString("sort_mode", newSortMode)
-                }
-            },
-            onPickFolder = { openFolderPicker() },
-            onRemoveFolder = { folderUriToRemove ->
-                selectedFolderUris = selectedFolderUris.filter { it != folderUriToRemove }
-                hasAutoResumed = false
-
-                context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
-                    putStringSet("selected_folder_uris", selectedFolderUris.toSet())
-                }
-
-                files = loadMusicFilesFromFolders(context, selectedFolderUris)
-            },
-            onPlaySong = { index ->
-                playSong(index)
-                showPlayerScreen = true
-            },
-            onOpenPlayer = {
-                showPlayerScreen = true
-            },
-            onPlayPause = {
-                mediaController?.let { controller ->
-                    if (controller.isPlaying) {
-                        controller.pause()
-                        savePlaybackState()
-                    } else {
-                        controller.play()
+    AnimatedContent(
+        targetState = when {
+            showSettingsScreen -> "settings"
+            showPlayerScreen -> "player"
+            else -> "library"
+        },
+        label = "ScreenTransitionAnimation"
+    ) { screen ->
+        when (screen) {
+            "settings" -> {
+                SettingsScreen(
+                    modifier = modifier,
+                    currentSortMode = sortMode,
+                    onBack = {
+                        showSettingsScreen = false
+                    },
+                    onClearFolders = {
+                        clearFolders()
+                    },
+                    onClearPlaybackState = {
+                        clearPlaybackState()
                     }
-                }
-            },
-            onOpenSettings = {
-                showSettingsScreen = true
+                )
             }
-        )
-    } else {
-        PlayerScreen(
-            modifier = modifier,
-            songName = currentSongName,
-            songUri = currentSongUri,
-            isPlaying = isPlaying,
-            playbackPosition = playbackPosition,
-            playbackDuration = playbackDuration,
-            isShuffleEnabled = isShuffleEnabled,
-            selectedRepeatMode = selectedRepeatMode,
-            queueSongs = files.map { fileUri ->
-                DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
-            },
-            currentSongIndex = currentSongIndex,
-            sleepTimerRemainingSeconds = sleepTimerRemainingSeconds,
-            onBack = {
-                showPlayerScreen = false
-            },
-            onSeekChange = { newPosition ->
-                playbackPosition = newPosition
-            },
-            onSeekFinished = {
-                mediaController?.seekTo(playbackPosition.toLong())
-                savePlaybackState()
-            },
-            onPrevious = {
-                val index = currentSongIndex ?: return@PlayerScreen
-                if (index > 0) {
-                    playSong(index - 1)
-                }
-            },
-            onPlayPause = {
-                mediaController?.let { controller ->
-                    if (controller.isPlaying) {
-                        controller.pause()
-                        savePlaybackState()
-                    } else {
-                        controller.play()
-                    }
-                }
-            },
-            onNext = {
-                val index = currentSongIndex ?: return@PlayerScreen
-                if (index < files.size - 1) {
-                    playSong(index + 1)
-                }
-            },
-            onToggleShuffle = {
-                isShuffleEnabled = !isShuffleEnabled
-                mediaController?.shuffleModeEnabled = isShuffleEnabled
-            },
-            onChangeRepeatMode = {
-                selectedRepeatMode = (selectedRepeatMode + 1) % 3
 
-                mediaController?.repeatMode = when (selectedRepeatMode) {
-                    1 -> Player.REPEAT_MODE_ONE
-                    2 -> Player.REPEAT_MODE_ALL
-                    else -> Player.REPEAT_MODE_OFF
-                }
-            },
-            onQueueSongClick = { index ->
-                playSong(index)
-            },
-            onSleepTimerSelected = { minutes ->
-                sleepTimerRemainingSeconds = minutes?.times(60)
+            "player" -> {
+                PlayerScreen(
+                    modifier = modifier,
+                    songName = currentSongName,
+                    songUri = currentSongUri,
+                    isPlaying = isPlaying,
+                    playbackPosition = playbackPosition,
+                    playbackDuration = playbackDuration,
+                    isShuffleEnabled = isShuffleEnabled,
+                    selectedRepeatMode = selectedRepeatMode,
+                    queueSongs = files.map { fileUri ->
+                        DocumentFile.fromSingleUri(context, fileUri.toUri())?.name ?: "Unknown song"
+                    },
+                    currentSongIndex = currentSongIndex,
+                    sleepTimerRemainingSeconds = sleepTimerRemainingSeconds,
+                    onBack = {
+                        showPlayerScreen = false
+                    },
+                    onSeekChange = { newPosition ->
+                        playbackPosition = newPosition
+                    },
+                    onSeekFinished = {
+                        mediaController?.seekTo(playbackPosition.toLong())
+                        savePlaybackState()
+                    },
+                    onPrevious = {
+                        val index = currentSongIndex ?: return@PlayerScreen
+                        if (index > 0) {
+                            playSong(index - 1)
+                        }
+                    },
+                    onPlayPause = {
+                        mediaController?.let { controller ->
+                            if (controller.isPlaying) {
+                                controller.pause()
+                                savePlaybackState()
+                            } else {
+                                controller.play()
+                            }
+                        }
+                    },
+                    onNext = {
+                        val index = currentSongIndex ?: return@PlayerScreen
+                        if (index < files.size - 1) {
+                            playSong(index + 1)
+                        }
+                    },
+                    onToggleShuffle = {
+                        isShuffleEnabled = !isShuffleEnabled
+                        mediaController?.shuffleModeEnabled = isShuffleEnabled
+                    },
+                    onChangeRepeatMode = {
+                        selectedRepeatMode = (selectedRepeatMode + 1) % 3
+
+                        mediaController?.repeatMode = when (selectedRepeatMode) {
+                            1 -> Player.REPEAT_MODE_ONE
+                            2 -> Player.REPEAT_MODE_ALL
+                            else -> Player.REPEAT_MODE_OFF
+                        }
+                    },
+                    onQueueSongClick = { index ->
+                        playSong(index)
+                    },
+                    onSleepTimerSelected = { minutes ->
+                        sleepTimerRemainingSeconds = minutes?.times(60)
+                    }
+                )
             }
-        )
+
+            else -> {
+                LibraryScreen(
+                    modifier = modifier,
+                    selectedFolderUris = selectedFolderUris,
+                    files = files,
+                    currentSongIndex = currentSongIndex,
+                    currentSongName = currentSongName,
+                    currentSongUri = currentSongUri,
+                    isPlaying = isPlaying,
+                    searchQuery = searchQuery,
+                    sortMode = sortMode,
+                    onSearchChange = { newSearchQuery ->
+                        searchQuery = newSearchQuery
+                    },
+                    onSortModeChange = { newSortMode ->
+                        sortMode = newSortMode
+
+                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                            putString("sort_mode", newSortMode)
+                        }
+                    },
+                    onPickFolder = { openFolderPicker() },
+                    onRemoveFolder = { folderUriToRemove ->
+                        selectedFolderUris = selectedFolderUris.filter { it != folderUriToRemove }
+                        hasAutoResumed = false
+
+                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                            putStringSet("selected_folder_uris", selectedFolderUris.toSet())
+                        }
+
+                        files = loadMusicFilesFromFolders(context, selectedFolderUris)
+                    },
+                    onPlaySong = { index ->
+                        playSong(index)
+                        showPlayerScreen = true
+                    },
+                    onOpenPlayer = {
+                        showPlayerScreen = true
+                    },
+                    onPlayPause = {
+                        mediaController?.let { controller ->
+                            if (controller.isPlaying) {
+                                controller.pause()
+                                savePlaybackState()
+                            } else {
+                                controller.play()
+                            }
+                        }
+                    },
+                    onOpenSettings = {
+                        showSettingsScreen = true
+                    }
+                )
+            }
+        }
     }
 }
