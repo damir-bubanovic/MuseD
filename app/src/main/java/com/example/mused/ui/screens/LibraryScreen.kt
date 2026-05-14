@@ -1,6 +1,13 @@
 package com.example.mused.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -17,8 +24,10 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,10 +38,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mused.R
 import com.example.mused.ui.components.AlbumArt
 import com.example.mused.utils.formatFolderName
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.runtime.getValue
-
 
 @Composable
 fun LibraryScreen(
@@ -43,6 +48,8 @@ fun LibraryScreen(
     currentSongName: String?,
     currentSongUri: String?,
     isPlaying: Boolean,
+    playbackPosition: Int,
+    playbackDuration: Int,
     searchQuery: String,
     sortMode: String,
     onSearchChange: (String) -> Unit,
@@ -84,9 +91,7 @@ fun LibraryScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.mused_header_logo),
                 contentDescription = "MuseD Logo",
@@ -117,9 +122,7 @@ fun LibraryScreen(
                 Text("Add Music Folder")
             }
 
-            OutlinedButton(
-                onClick = onOpenSettings
-            ) {
+            OutlinedButton(onClick = onOpenSettings) {
                 Text("Settings")
             }
         }
@@ -259,6 +262,17 @@ fun LibraryScreen(
                     label = "SongRowElevationAnimation"
                 )
 
+                val pulseTransition = rememberInfiniteTransition(label = "NowPlayingPulseTransition")
+
+                val pulseScale by pulseTransition.animateFloat(
+                    initialValue = 1f,
+                    targetValue = if (isCurrentSong && isPlaying) 1.25f else 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 700),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "NowPlayingPulseScale"
+                )
 
                 Card(
                     modifier = Modifier
@@ -280,7 +294,12 @@ fun LibraryScreen(
                     ) {
                         Text(
                             text = if (isCurrentSong) "▶" else "",
-                            modifier = Modifier.width(24.dp),
+                            modifier = Modifier
+                                .width(24.dp)
+                                .graphicsLayer {
+                                    scaleX = if (isCurrentSong && isPlaying) pulseScale else 1f
+                                    scaleY = if (isCurrentSong && isPlaying) pulseScale else 1f
+                                },
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
@@ -323,34 +342,49 @@ fun LibraryScreen(
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AlbumArt(
-                            songUri = currentSongUri,
-                            modifier = Modifier.size(48.dp)
+                    Column {
+                        LinearProgressIndicator(
+                            progress = {
+                                if (playbackDuration > 0) {
+                                    playbackPosition.toFloat() / playbackDuration.toFloat()
+                                } else {
+                                    0f
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primaryContainer
                         )
 
-                        Spacer(Modifier.width(12.dp))
-
-                        Text(
-                            text = currentSongName ?: "",
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            maxLines = 1
-                        )
-
-                        IconButton(onClick = onPlayPause) {
-                            Icon(
-                                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = "Play/Pause",
-                                tint = MaterialTheme.colorScheme.primary
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AlbumArt(
+                                songUri = currentSongUri,
+                                modifier = Modifier.size(48.dp)
                             )
+
+                            Spacer(Modifier.width(12.dp))
+
+                            Text(
+                                text = currentSongName ?: "",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 1
+                            )
+
+                            IconButton(onClick = onPlayPause) {
+                                Icon(
+                                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = "Play/Pause",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                 }
