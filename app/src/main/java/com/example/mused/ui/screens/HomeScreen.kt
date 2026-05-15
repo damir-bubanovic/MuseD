@@ -47,10 +47,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var songs by remember { mutableStateOf<List<SongData>>(emptyList()) }
-
-    var mediaController by remember {
-        mutableStateOf<MediaController?>(null)
-    }
+    var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
     var currentSongName by remember { mutableStateOf<String?>(null) }
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
@@ -78,10 +75,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var searchQuery by remember { mutableStateOf("") }
-
-    var sleepTimerRemainingSeconds by remember {
-        mutableStateOf<Int?>(null)
-    }
+    var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
         mutableStateOf(
@@ -110,7 +104,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var hasAutoResumed by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-
         val sessionToken = SessionToken(
             context,
             ComponentName(context, MusicService::class.java)
@@ -135,57 +128,30 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    LaunchedEffect(mediaController, isPlaying) {
-
-        while (isPlaying) {
-
-            playbackPosition =
-                mediaController?.currentPosition?.toInt() ?: 0
-
-            playbackDuration =
-                mediaController?.duration
-                    ?.takeIf { it > 0 }
-                    ?.toInt() ?: 0
-
-            delay(1000)
-        }
-    }
-
     DisposableEffect(mediaController, songs) {
-
         val controller = mediaController
 
         if (controller == null) {
-
             onDispose { }
-
         } else {
-
             val listener = object : Player.Listener {
-
                 override fun onMediaItemTransition(
                     mediaItem: MediaItem?,
                     reason: Int
                 ) {
-
                     val index = controller.currentMediaItemIndex
-
                     val currentSong = songs.getOrNull(index)
 
                     if (currentSong != null) {
-
                         currentSongIndex = index
                         currentSongName = currentSong.title
                         currentSongUri = currentSong.uri
                         savedSongUri = currentSong.uri
-
                         playbackPosition = 0
                     }
                 }
 
-                override fun onIsPlayingChanged(
-                    isPlayingNow: Boolean
-                ) {
+                override fun onIsPlayingChanged(isPlayingNow: Boolean) {
                     isPlaying = isPlayingNow
                 }
             }
@@ -199,7 +165,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(selectedFolderUris) {
-
         songs = loadSongDataFromFolders(
             context,
             selectedFolderUris
@@ -207,14 +172,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun savePlaybackState() {
-
         val currentIndex = currentSongIndex ?: return
-
-        val currentFileUri =
-            songs.getOrNull(currentIndex)?.uri ?: return
-
-        val currentPosition =
-            mediaController?.currentPosition?.toInt() ?: 0
+        val currentFileUri = songs.getOrNull(currentIndex)?.uri ?: return
+        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
 
         savedSongUri = currentFileUri
         savedPosition = currentPosition
@@ -223,30 +183,38 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-
             putString("current_song_uri", currentFileUri)
-
             putInt("current_song_index", currentIndex)
-
             putInt("current_position_ms", currentPosition)
+            putBoolean("shuffle_enabled", isShuffleEnabled)
+            putInt("repeat_mode", selectedRepeatMode)
+        }
+    }
+
+    LaunchedEffect(mediaController, isPlaying) {
+        while (isPlaying) {
+            playbackPosition =
+                mediaController?.currentPosition?.toInt() ?: 0
+
+            playbackDuration =
+                mediaController?.duration
+                    ?.takeIf { it > 0 }
+                    ?.toInt() ?: 0
+
+            savePlaybackState()
+
+            delay(1000)
         }
     }
 
     DisposableEffect(mediaController) {
-
         val noisyReceiver = object : BroadcastReceiver() {
-
             override fun onReceive(
                 context: Context?,
                 intent: Intent?
             ) {
-
-                if (intent?.action ==
-                    AudioManager.ACTION_AUDIO_BECOMING_NOISY
-                ) {
-
+                if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
                     mediaController?.pause()
-
                     savePlaybackState()
                 }
             }
@@ -266,18 +234,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(sleepTimerRemainingSeconds) {
-
         val remainingSeconds =
             sleepTimerRemainingSeconds ?: return@LaunchedEffect
 
         if (remainingSeconds <= 0) {
-
             mediaController?.pause()
-
             savePlaybackState()
-
             sleepTimerRemainingSeconds = null
-
             return@LaunchedEffect
         }
 
@@ -288,7 +251,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun clearPlaybackState() {
-
         mediaController?.pause()
 
         currentSongName = null
@@ -302,14 +264,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         playbackDuration = 0
 
         isPlaying = false
-
         showPlayerScreen = false
 
         context.getSharedPreferences(
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-
             remove("current_song_uri")
             remove("current_song_index")
             remove("current_position_ms")
@@ -317,11 +277,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun clearFolders() {
-
         mediaController?.pause()
 
         selectedFolderUris = emptyList()
-
         songs = emptyList()
 
         currentSongName = null
@@ -335,18 +293,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         playbackDuration = 0
 
         isPlaying = false
-
         hasAutoResumed = false
-
         showPlayerScreen = false
-
         sleepTimerRemainingSeconds = null
 
         context.getSharedPreferences(
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-
             remove("selected_folder_uris")
             remove("current_song_uri")
             remove("current_song_index")
@@ -355,7 +309,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun playSong(index: Int) {
-
         if (index !in songs.indices) return
 
         val song = songs[index]
@@ -366,7 +319,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         savedSongUri = song.uri
 
         mediaController?.apply {
-
             val mediaItems =
                 buildMediaItems(context, songs)
 
@@ -375,30 +327,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             shuffleModeEnabled = isShuffleEnabled
 
             repeatMode = when (selectedRepeatMode) {
-
                 1 -> Player.REPEAT_MODE_ONE
-
                 2 -> Player.REPEAT_MODE_ALL
-
                 else -> Player.REPEAT_MODE_OFF
             }
 
             prepare()
-
             play()
         }
     }
 
     LaunchedEffect(songs, savedSongUri, mediaController) {
-
         if (hasAutoResumed) return@LaunchedEffect
-
         if (songs.isEmpty()) return@LaunchedEffect
-
         if (savedSongUri == null) return@LaunchedEffect
-
         if (savedPosition <= 0) return@LaunchedEffect
-
         if (mediaController == null) return@LaunchedEffect
 
         val savedIndex =
@@ -407,22 +350,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
         if (savedIndex != -1) {
-
             val positionToResume = savedPosition
 
             hasAutoResumed = true
-
             playSong(savedIndex)
-
             mediaController?.seekTo(positionToResume.toLong())
-
             showPlayerScreen = false
         }
     }
 
     val openFolderPicker =
         rememberFolderPickerLauncher { folderUri ->
-
             if (folderUri == null) {
                 return@rememberFolderPickerLauncher
             }
@@ -436,7 +374,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 "mused_prefs",
                 Context.MODE_PRIVATE
             ).edit {
-
                 putStringSet(
                     "selected_folder_uris",
                     selectedFolderUris.toSet()
@@ -451,33 +388,24 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     AnimatedContent(
         targetState = when {
-
             showSettingsScreen -> "settings"
-
             showPlayerScreen -> "player"
-
             else -> "library"
         },
         label = "ScreenTransitionAnimation"
     ) { screen ->
 
         when (screen) {
-
             "settings" -> {
-
                 SettingsScreen(
                     modifier = modifier,
-
                     currentSortMode = sortMode,
-
                     onBack = {
                         showSettingsScreen = false
                     },
-
                     onClearFolders = {
                         clearFolders()
                     },
-
                     onClearPlaybackState = {
                         clearPlaybackState()
                     }
@@ -485,52 +413,35 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             "player" -> {
-
                 PlayerScreen(
                     modifier = modifier,
-
                     songName = currentSongName,
-
                     songUri = currentSongUri,
-
                     isPlaying = isPlaying,
-
                     playbackPosition = playbackPosition,
-
                     playbackDuration = playbackDuration,
-
                     isShuffleEnabled = isShuffleEnabled,
-
                     selectedRepeatMode = selectedRepeatMode,
-
                     queueSongs = songs.map { song ->
                         song.title
                     },
-
                     currentSongIndex = currentSongIndex,
-
                     sleepTimerRemainingSeconds =
                         sleepTimerRemainingSeconds,
-
                     onBack = {
                         showPlayerScreen = false
                     },
-
                     onSeekChange = { newPosition ->
                         playbackPosition = newPosition
                     },
-
                     onSeekFinished = {
-
                         mediaController?.seekTo(
                             playbackPosition.toLong()
                         )
 
                         savePlaybackState()
                     },
-
                     onPrevious = {
-
                         val index =
                             currentSongIndex ?: return@PlayerScreen
 
@@ -538,26 +449,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             playSong(index - 1)
                         }
                     },
-
                     onPlayPause = {
-
                         mediaController?.let { controller ->
-
                             if (controller.isPlaying) {
-
                                 controller.pause()
-
                                 savePlaybackState()
-
                             } else {
-
                                 controller.play()
                             }
                         }
                     },
-
                     onNext = {
-
                         val index =
                             currentSongIndex ?: return@PlayerScreen
 
@@ -565,36 +467,39 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             playSong(index + 1)
                         }
                     },
-
                     onToggleShuffle = {
                         isShuffleEnabled = !isShuffleEnabled
                         mediaController?.shuffleModeEnabled = isShuffleEnabled
 
-                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                        context.getSharedPreferences(
+                            "mused_prefs",
+                            Context.MODE_PRIVATE
+                        ).edit {
                             putBoolean("shuffle_enabled", isShuffleEnabled)
                         }
                     },
-
                     onChangeRepeatMode = {
-                        selectedRepeatMode = (selectedRepeatMode + 1) % 3
+                        selectedRepeatMode =
+                            (selectedRepeatMode + 1) % 3
 
-                        mediaController?.repeatMode = when (selectedRepeatMode) {
-                            1 -> Player.REPEAT_MODE_ONE
-                            2 -> Player.REPEAT_MODE_ALL
-                            else -> Player.REPEAT_MODE_OFF
-                        }
+                        mediaController?.repeatMode =
+                            when (selectedRepeatMode) {
+                                1 -> Player.REPEAT_MODE_ONE
+                                2 -> Player.REPEAT_MODE_ALL
+                                else -> Player.REPEAT_MODE_OFF
+                            }
 
-                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                        context.getSharedPreferences(
+                            "mused_prefs",
+                            Context.MODE_PRIVATE
+                        ).edit {
                             putInt("repeat_mode", selectedRepeatMode)
                         }
                     },
-
                     onQueueSongClick = { index ->
                         playSong(index)
                     },
-
                     onSleepTimerSelected = { minutes ->
-
                         sleepTimerRemainingSeconds =
                             minutes?.times(60)
                     }
@@ -602,56 +507,38 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
 
             else -> {
-
                 LibraryScreen(
                     modifier = modifier,
-
                     selectedFolderUris = selectedFolderUris,
-
                     songs = songs,
-
                     currentSongIndex = currentSongIndex,
-
                     currentSongName = currentSongName,
-
                     currentSongUri = currentSongUri,
-
                     isPlaying = isPlaying,
-
                     playbackPosition = playbackPosition,
-
                     playbackDuration = playbackDuration,
-
                     searchQuery = searchQuery,
-
                     sortMode = sortMode,
-
                     onSearchChange = { newSearchQuery ->
                         searchQuery = newSearchQuery
                     },
-
                     onSortModeChange = { newSortMode ->
-
                         sortMode = newSortMode
 
                         context.getSharedPreferences(
                             "mused_prefs",
                             Context.MODE_PRIVATE
                         ).edit {
-
                             putString(
                                 "sort_mode",
                                 newSortMode
                             )
                         }
                     },
-
                     onPickFolder = {
                         openFolderPicker()
                     },
-
                     onRemoveFolder = { folderUriToRemove ->
-
                         selectedFolderUris =
                             selectedFolderUris.filter {
                                 it != folderUriToRemove
@@ -663,7 +550,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             "mused_prefs",
                             Context.MODE_PRIVATE
                         ).edit {
-
                             putStringSet(
                                 "selected_folder_uris",
                                 selectedFolderUris.toSet()
@@ -675,35 +561,23 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             selectedFolderUris
                         )
                     },
-
                     onPlaySong = { index ->
-
                         playSong(index)
-
                         showPlayerScreen = true
                     },
-
                     onOpenPlayer = {
                         showPlayerScreen = true
                     },
-
                     onPlayPause = {
-
                         mediaController?.let { controller ->
-
                             if (controller.isPlaying) {
-
                                 controller.pause()
-
                                 savePlaybackState()
-
                             } else {
-
                                 controller.play()
                             }
                         }
                     },
-
                     onOpenSettings = {
                         showSettingsScreen = true
                     }
