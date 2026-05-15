@@ -61,8 +61,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var playbackPosition by remember { mutableIntStateOf(0) }
     var playbackDuration by remember { mutableIntStateOf(0) }
 
-    var isShuffleEnabled by remember { mutableStateOf(false) }
-    var selectedRepeatMode by remember { mutableIntStateOf(0) }
+    var isShuffleEnabled by remember {
+        mutableStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getBoolean("shuffle_enabled", false)
+        )
+    }
+
+    var selectedRepeatMode by remember {
+        mutableIntStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getInt("repeat_mode", 0)
+        )
+    }
 
     var searchQuery by remember { mutableStateOf("") }
 
@@ -109,6 +122,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         controllerFuture.addListener(
             {
                 mediaController = controllerFuture.get()
+
+                mediaController?.shuffleModeEnabled = isShuffleEnabled
+
+                mediaController?.repeatMode = when (selectedRepeatMode) {
+                    1 -> Player.REPEAT_MODE_ONE
+                    2 -> Player.REPEAT_MODE_ALL
+                    else -> Player.REPEAT_MODE_OFF
+                }
             },
             MoreExecutors.directExecutor()
         )
@@ -546,27 +567,26 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     },
 
                     onToggleShuffle = {
-
                         isShuffleEnabled = !isShuffleEnabled
+                        mediaController?.shuffleModeEnabled = isShuffleEnabled
 
-                        mediaController?.shuffleModeEnabled =
-                            isShuffleEnabled
+                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                            putBoolean("shuffle_enabled", isShuffleEnabled)
+                        }
                     },
 
                     onChangeRepeatMode = {
+                        selectedRepeatMode = (selectedRepeatMode + 1) % 3
 
-                        selectedRepeatMode =
-                            (selectedRepeatMode + 1) % 3
+                        mediaController?.repeatMode = when (selectedRepeatMode) {
+                            1 -> Player.REPEAT_MODE_ONE
+                            2 -> Player.REPEAT_MODE_ALL
+                            else -> Player.REPEAT_MODE_OFF
+                        }
 
-                        mediaController?.repeatMode =
-                            when (selectedRepeatMode) {
-
-                                1 -> Player.REPEAT_MODE_ONE
-
-                                2 -> Player.REPEAT_MODE_ALL
-
-                                else -> Player.REPEAT_MODE_OFF
-                            }
+                        context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE).edit {
+                            putInt("repeat_mode", selectedRepeatMode)
+                        }
                     },
 
                     onQueueSongClick = { index ->
