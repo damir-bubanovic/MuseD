@@ -34,7 +34,7 @@ class MusicService : MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: android.content.Intent?) {
-        if (!player.isPlaying) {
+        if (!player.playWhenReady || player.mediaItemCount == 0) {
             stopSelf()
         }
 
