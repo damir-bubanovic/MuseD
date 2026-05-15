@@ -2,7 +2,7 @@
 
 ## Goal
 
-MUSED is a modern offline Android music player focused on local music playback, clean UI, persistent playback state, and smooth background listening experience.
+MUSED is a modern offline Android music player focused on local music playback, smooth background listening, persistent playback state, clean UI, and advanced offline audio features.
 
 Built using:
 
@@ -18,11 +18,13 @@ Built using:
 
 ## Implemented
 
-* User selects music folder via system picker (SAF)
+* User selects music folders via system picker (SAF)
 * App scans and loads supported audio files
 * Fully offline playback
-* Folder persists across app restarts
-* User can change folder anytime
+* Folder selection persists across app restarts
+* User can add/remove folders anytime
+* Multiple folder support
+* Duplicate folder prevention
 
 ## Supported Formats
 
@@ -31,6 +33,10 @@ Built using:
 * .m4a
 * .flac
 * .ogg
+
+## Planned
+
+* Recursive subfolder scanning
 
 ---
 
@@ -45,9 +51,8 @@ Built using:
 * Auto-refresh after folder changes
 * Search filtering by song name
 * Styled card-based song rows
-* Mini player at bottom of library screen
-* Multiple folder support
-* Folder removal support
+* Mini player inside library screen
+* Cached library loading for faster startup
 
 ## Sorting System ✅
 
@@ -76,6 +81,8 @@ Built using:
 * Smooth seeking
 * Background playback
 * MediaSession integration
+* Playback notification controls
+* Lock screen controls
 
 ## UI Features
 
@@ -96,14 +103,20 @@ Built using:
 * Selected folder URIs
 * Current song URI
 * Playback position
+* Shuffle state
+* Repeat mode
 * Current playlist state
 * Sort mode
+* Dynamic theme preference
+* Equalizer state
+* Equalizer preset
 
 ## Behavior
 
 * Playback state saved automatically
 * Position restored after app restart
 * Resume after seeking
+* Persistent queue restoration
 * Safe handling for missing files
 
 ---
@@ -113,9 +126,10 @@ Built using:
 ## Implemented
 
 * App automatically restores:
-  * last song
-  * playback position
-  * playlist context
+  * Last song
+  * Playback position
+  * Queue context
+  * Shuffle/repeat state
 
 ## Flow
 
@@ -153,6 +167,8 @@ App launch → files load → restore playback state
   * Play / Pause
   * Next
   * Previous
+* Audio focus support
+* Proper media audio attributes
 
 ## Powered By
 
@@ -168,12 +184,40 @@ App launch → files load → restore playback state
 
 * Basic external playback compatibility
 * MediaSession integration
+* Bluetooth media button compatibility
+* External play/pause command support
+* Lock screen media command support
+* Audio becoming noisy receiver
+* Auto-pause on disconnect events
 
 ## Planned
 
-* Earbud play/pause support
+### Earbud Integration
+
+* Reliable earbud play/pause handling
 * Hardware next/previous support
-* Auto-pause on disconnect
+* Single-tap media controls
+* Double-tap next track support
+* Triple-tap previous track support
+
+### Smart Pause Features
+
+* Resume after reconnect
+* Advanced audio route detection
+
+## Android Integration
+
+### Audio Becoming Noisy Receiver ✅
+
+Uses:
+
+* `AudioManager.ACTION_AUDIO_BECOMING_NOISY`
+
+Purpose:
+
+* Detect wired headphone unplug
+* Detect Bluetooth disconnect
+* Automatically pause playback before audio switches to speaker
 
 ---
 
@@ -183,10 +227,10 @@ App launch → files load → restore playback state
 
 * Embedded album art extraction
 * Album art displayed:
-  * in player screen
-  * mini player
-  * notifications
-  * lock screen
+  * Player screen
+  * Mini player
+  * Notifications
+  * Lock screen
 
 ## Metadata
 
@@ -222,6 +266,7 @@ App launch → files load → restore playback state
 * Custom MuseD branding
 * Custom launcher icon
 * Red theme styling
+* Dynamic Material You theme support
 * Styled library cards
 * Improved typography
 * Modern spacing/layout
@@ -229,6 +274,12 @@ App launch → files load → restore playback state
 * Styled mini player
 * Current-song highlighting
 * Responsive Compose UI
+
+## Planned
+
+* OLED dark mode polish
+* Advanced animations
+* Enhanced transitions
 
 ---
 
@@ -274,6 +325,15 @@ Mini player shown inside library screen:
 * Clear all folders
 * Clear playback state
 
+### Theme Settings
+
+* Dynamic theme toggle
+
+### Audio Settings
+
+* Equalizer enable/disable
+* Equalizer preset selector
+
 ### Information
 
 * Current sort mode display
@@ -282,7 +342,58 @@ Mini player shown inside library screen:
 
 ---
 
-# Chapter 17: Architecture & Stack ✅
+# Chapter 17: Equalizer System 🟡
+
+## Implemented
+
+* Android Equalizer integration
+* Audio session attachment
+* Persistent equalizer state
+* Persistent preset saving
+* Live preset switching
+* Live enable/disable support
+
+## Presets
+
+* Flat
+* Bass Boost
+* Vocal
+* Rock
+* Classical
+
+## Architecture
+
+* Dedicated `AudioEffectsManager`
+* Live SharedPreferences listener support
+* Service-level audio effect management
+
+## Planned
+
+* Full equalizer sliders
+* Band controls
+* Audio visualizer
+* Bass strength controls
+
+---
+
+# Chapter 18: Performance Optimization 🟡
+
+## Implemented
+
+* Song cache system
+* Faster library startup
+* Cached song restoration
+
+## Planned
+
+* Metadata caching
+* Recursive optimized scanning
+* Large library optimization
+* Lazy loading improvements
+
+---
+
+# Chapter 19: Architecture & Stack ✅
 
 ## Current Architecture
 
@@ -291,18 +402,23 @@ Mini player shown inside library screen:
 * MediaSessionService background service
 * SharedPreferences persistence
 * SAF file access
+* Dedicated audio effects manager
 
 ## Current Refactors
 
 * Playback metadata extraction moved out of UI
 * Media item building separated into helper layer
 * Folder loading separated into reusable readers
+* Song caching system added
+* Audio effects separated into dedicated manager
 
 ## Planned Refactors
 
 * ViewModel architecture
 * Dedicated playback manager
 * Better state separation
+* Repository pattern
+* Improved service/UI synchronization
 
 ---
 
@@ -334,6 +450,9 @@ Mini player shown inside library screen:
 19. Queue system ✔
 20. Multiple folder support ✔
 21. Settings screen ✔
+22. Dynamic themes ✔
+23. Equalizer presets ✔
+24. Song caching ✔
 
 ---
 
@@ -341,16 +460,32 @@ Mini player shown inside library screen:
 
 ## High Priority
 
-### 1. Sleep Timer
+### 1. Recursive Folder Scanning
 
-* Auto-stop playback
-* Timer presets
+* Detect music inside subfolders
+* Better real-world library support
+
+---
+
+### 2. Metadata Caching
+
+* Faster startup
+* Reduced SAF scanning overhead
+
+---
+
+### 3. Advanced Equalizer
+
+* Manual EQ sliders
+* Band controls
+* Bass enhancement
+* Audio visualizer
 
 ---
 
 ## UI / UX Improvements
 
-### 2. Animations
+### 4. Animations
 
 * Screen transitions
 * Mini player animations
@@ -358,86 +493,27 @@ Mini player shown inside library screen:
 
 ---
 
-### 3. Better Dark Mode
+### 5. Better Dark Mode
 
 * OLED-friendly colors
 * Enhanced contrast
 
 ---
 
-### 4. Dynamic Themes
+### 6. Dynamic Theme Expansion
 
-* Material You support
-* Theme customization
-
----
-
-## Advanced Features
-
-### 5. Equalizer / Visualizer
-
-* Audio visualizer
-* Equalizer support
+* Additional theme customization
+* Accent color options
 
 ---
 
-### 6. Recursive Folder Scanning
+## Architecture Improvements
 
-* Detect music inside subfolders
+### 7. ViewModel Refactor
 
----
-
-### 7. Performance Optimization
-
-* Faster loading for large libraries
-* Metadata caching
-
----
-
-# Chapter 8: Earbuds & External Controls 🟡
-
-## Working
-
-* Basic external playback compatibility
-* MediaSession integration
-* Bluetooth media button compatibility
-* External play/pause command support
-* Lock screen media command support
-
-## Planned
-
-### Earbud Integration
-
-* Reliable earbud play/pause handling
-* Hardware next/previous support
-* Single-tap media controls
-* Double-tap next track support
-* Triple-tap previous track support
-
-### Smart Pause Features
-
-* Auto-pause on wired headphone disconnect
-* Auto-pause on Bluetooth disconnect
-* Audio route change detection
-* Resume support after reconnect
-
-## Planned Android Integration
-
-### Audio Becoming Noisy Receiver
-
-Will use:
-
-* `AudioManager.ACTION_AUDIO_BECOMING_NOISY`
-
-Purpose:
-
-* Detect wired headphone unplug
-* Detect Bluetooth audio disconnect
-* Automatically pause playback before audio switches to speaker
-
-## Notes
-
-Modern earbuds may also send pause commands directly through MediaSession controls when removed from the ear. MUSED's Media3 + MediaSessionService architecture is designed to support these standard Android media control behaviors.
+* Cleaner state management
+* Better Compose architecture
+* Improved lifecycle handling
 
 ---
 
@@ -455,8 +531,12 @@ MUSED is now a portfolio-level offline Android music player featuring:
 * Queue system
 * Shuffle & repeat
 * Mini player
+* Dynamic theming
+* Equalizer presets
+* Song caching
 * Settings management
 * Modern Compose UI
 * Media3 architecture
+* Audio effects system
 
-The app has evolved beyond a simple prototype and is now entering advanced Version 2 development.
+MUSED has evolved far beyond a basic prototype and is now entering advanced Version 2 development focused on scalability, audio enhancement, performance optimization, and architecture refinement.
