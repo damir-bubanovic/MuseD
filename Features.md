@@ -474,14 +474,6 @@ Mini player shown inside library screen:
 
 ---
 
-### 3. Advanced Equalizer
-
-* Manual EQ sliders
-* Band controls
-* Bass enhancement
-* Audio visualizer
-
----
 
 ## UI / UX Improvements
 
@@ -497,13 +489,6 @@ Mini player shown inside library screen:
 
 * OLED-friendly colors
 * Enhanced contrast
-
----
-
-### 6. Dynamic Theme Expansion
-
-* Additional theme customization
-* Accent color options
 
 ---
 

@@ -3,6 +3,7 @@ package com.example.mused.features.folders
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.example.mused.features.library.readSongMetadata
 import com.example.mused.models.SongData
 
 fun loadMusicFilesFromFolder(
@@ -22,7 +23,10 @@ fun loadSongDataFromFolder(
     val documentFile = DocumentFile.fromTreeUri(context, folderUriString.toUri())
         ?: return emptyList()
 
-    return collectSongData(documentFile)
+    return collectSongData(
+        context = context,
+        folder = documentFile
+    )
 }
 
 private fun collectMusicFiles(folder: DocumentFile): List<String> {
@@ -38,19 +42,38 @@ private fun collectMusicFiles(folder: DocumentFile): List<String> {
     }
 }
 
-private fun collectSongData(folder: DocumentFile): List<SongData> {
+private fun collectSongData(
+    context: Context,
+    folder: DocumentFile
+): List<SongData> {
     return folder.listFiles().flatMap { file ->
         when {
-            file.isDirectory -> collectSongData(file)
+            file.isDirectory -> collectSongData(
+                context = context,
+                folder = file
+            )
 
-            file.isFile && isSupportedAudioFile(file.name?.lowercase() ?: "") ->
+            file.isFile && isSupportedAudioFile(file.name?.lowercase() ?: "") -> {
+                val uriString = file.uri.toString()
+                val fallbackTitle = file.name ?: "Unknown song"
+
+                val metadata = readSongMetadata(
+                    context = context,
+                    uriString = uriString,
+                    fallbackTitle = fallbackTitle
+                )
+
                 listOf(
                     SongData(
-                        uri = file.uri.toString(),
-                        title = file.name ?: "Unknown song",
-                        lastModified = file.lastModified()
+                        uri = uriString,
+                        title = metadata.title,
+                        lastModified = file.lastModified(),
+                        durationMs = metadata.durationMs,
+                        artist = metadata.artist,
+                        album = metadata.album
                     )
                 )
+            }
 
             else -> emptyList()
         }

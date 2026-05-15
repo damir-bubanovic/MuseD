@@ -19,7 +19,8 @@ fun buildMediaItems(
 
         val metadata = MediaMetadata.Builder()
             .setTitle(song.title)
-            .setArtist("MUSED")
+            .setArtist(song.artist)
+            .setAlbumTitle(song.album)
             .apply {
                 artworkBytes?.let {
                     setArtworkData(

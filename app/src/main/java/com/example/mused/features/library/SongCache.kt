@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.mused.models.SongData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import androidx.core.content.edit
 
 
 private const val PREFS_NAME = "mused_prefs"
@@ -25,9 +26,9 @@ fun saveSongCache(
     val json =
         gson.toJson(songs)
 
-    prefs.edit()
-        .putString(SONG_CACHE_KEY, json)
-        .apply()
+    prefs.edit {
+        putString(SONG_CACHE_KEY, json)
+    }
 }
 
 fun loadSongCache(
@@ -68,7 +69,7 @@ fun clearSongCache(
     context.getSharedPreferences(
         PREFS_NAME,
         Context.MODE_PRIVATE
-    ).edit()
-        .remove(SONG_CACHE_KEY)
-        .apply()
+    ).edit {
+        remove(SONG_CACHE_KEY)
+    }
 }
