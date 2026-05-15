@@ -22,9 +22,13 @@ import com.example.mused.features.folders.loadSongDataFromFolders
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
-import com.example.mused.models.SongData
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
+import com.example.mused.features.library.clearSongCache
+import com.example.mused.features.library.loadSongCache
+import com.example.mused.features.library.saveSongCache
+
+
 
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(UnstableApi::class, ExperimentalAnimationApi::class)
@@ -46,7 +50,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    var songs by remember { mutableStateOf<List<SongData>>(emptyList()) }
+    var songs by remember {
+        mutableStateOf(loadSongCache(context))
+    }
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
     var currentSongName by remember { mutableStateOf<String?>(null) }
@@ -165,10 +171,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(selectedFolderUris) {
-        songs = loadSongDataFromFolders(
+        val loadedSongs = loadSongDataFromFolders(
             context,
             selectedFolderUris
         )
+
+        songs = loadedSongs
+        saveSongCache(context, loadedSongs)
     }
 
     fun savePlaybackState() {
@@ -281,6 +290,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         selectedFolderUris = emptyList()
         songs = emptyList()
+        clearSongCache(context)
 
         currentSongName = null
         currentSongIndex = null
@@ -380,10 +390,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             }
 
-            songs = loadSongDataFromFolders(
+            val loadedSongs = loadSongDataFromFolders(
                 context,
                 selectedFolderUris
             )
+
+            songs = loadedSongs
+            saveSongCache(context, loadedSongs)
         }
 
     AnimatedContent(
@@ -556,10 +569,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             )
                         }
 
-                        songs = loadSongDataFromFolders(
+                        val loadedSongs = loadSongDataFromFolders(
                             context,
                             selectedFolderUris
                         )
+
+                        songs = loadedSongs
+                        saveSongCache(context, loadedSongs)
                     },
                     onPlaySong = { index ->
                         playSong(index)
