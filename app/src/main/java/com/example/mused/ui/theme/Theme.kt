@@ -16,10 +16,21 @@ import androidx.compose.ui.graphics.Color
 private val DarkColorScheme = darkColorScheme(
     primary = MusedRed,
     onPrimary = Color.White,
+
     primaryContainer = MusedDarkRed,
-    onPrimaryContainer = MusedLightRed,
+    onPrimaryContainer = Color.White,
+
     secondary = MusedRed,
-    onSecondary = Color.White
+    onSecondary = Color.White,
+
+    background = MusedBlack,
+    onBackground = MusedTextPrimary,
+
+    surface = MusedDarkSurface,
+    onSurface = MusedTextPrimary,
+
+    surfaceVariant = MusedSurfaceVariant,
+    onSurfaceVariant = MusedTextSecondary
 )
 
 private val LightColorScheme = lightColorScheme(
