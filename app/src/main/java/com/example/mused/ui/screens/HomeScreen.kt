@@ -363,7 +363,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             val positionToResume = savedPosition
 
             hasAutoResumed = true
+            val song = songs[savedIndex]
+
+            currentSongName = song.title
+            currentSongIndex = savedIndex
+            currentSongUri = song.uri
+
             playSong(savedIndex)
+
             mediaController?.seekTo(positionToResume.toLong())
             showPlayerScreen = false
         }
