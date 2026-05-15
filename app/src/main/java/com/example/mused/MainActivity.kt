@@ -17,8 +17,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MuseDTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
+            val prefs = getSharedPreferences(
+                "mused_prefs",
+                MODE_PRIVATE
+            )
+
+            val dynamicThemeEnabled =
+                prefs.getBoolean("dynamic_theme", false)
+
+            MuseDTheme(
+                dynamicColor = dynamicThemeEnabled
+            ) {
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+
                     HomeScreen(
                         modifier = Modifier.padding(innerPadding)
                     )

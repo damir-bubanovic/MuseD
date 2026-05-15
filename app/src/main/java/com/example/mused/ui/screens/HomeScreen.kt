@@ -80,6 +80,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
+    var dynamicThemeEnabled by remember {
+        mutableStateOf(
+            context
+                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getBoolean("dynamic_theme", false)
+        )
+    }
+
     var searchQuery by remember { mutableStateOf("") }
     var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
@@ -420,6 +428,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 SettingsScreen(
                     modifier = modifier,
                     currentSortMode = sortMode,
+                    dynamicThemeEnabled = dynamicThemeEnabled,
+                    onDynamicThemeChange = { enabled ->
+                        dynamicThemeEnabled = enabled
+
+                        context.getSharedPreferences(
+                            "mused_prefs",
+                            Context.MODE_PRIVATE
+                        ).edit {
+                            putBoolean("dynamic_theme", enabled)
+                        }
+                    },
                     onBack = {
                         showSettingsScreen = false
                     },

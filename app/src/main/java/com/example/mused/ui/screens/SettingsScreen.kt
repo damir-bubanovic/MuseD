@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     currentSortMode: String,
+    dynamicThemeEnabled: Boolean,
+    onDynamicThemeChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     onClearFolders: () -> Unit,
     onClearPlaybackState: () -> Unit
@@ -64,10 +66,33 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(4.dp))
 
-                Text(
-                    text = currentSortMode,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Spacer(Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Dynamic Theme",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "Use Android wallpaper colors",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = dynamicThemeEnabled,
+                        onCheckedChange = onDynamicThemeChange
+                    )
+                }
 
                 Spacer(Modifier.height(20.dp))
 
