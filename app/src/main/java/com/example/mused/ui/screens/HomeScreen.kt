@@ -20,21 +20,19 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.loadSongDataFromFolders
 import com.example.mused.features.folders.rememberFolderPickerLauncher
+import com.example.mused.features.library.clearSongCache
+import com.example.mused.features.library.loadSongCache
+import com.example.mused.features.library.saveSongCache
+import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
-import com.example.mused.features.library.clearSongCache
-import com.example.mused.features.library.loadSongCache
-import com.example.mused.features.library.saveSongCache
-
-
 
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(UnstableApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-
     val context = LocalContext.current
 
     var showPlayerScreen by remember { mutableStateOf(false) }
@@ -42,8 +40,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var selectedFolderUris by remember {
         mutableStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getStringSet("selected_folder_uris", emptySet())
                 ?.toList()
                 ?: emptyList()
@@ -53,6 +50,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var songs by remember {
         mutableStateOf(loadSongCache(context))
     }
+
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
     var currentSongName by remember { mutableStateOf<String?>(null) }
@@ -66,25 +64,39 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var isShuffleEnabled by remember {
         mutableStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getBoolean("shuffle_enabled", false)
         )
     }
 
     var selectedRepeatMode by remember {
         mutableIntStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getInt("repeat_mode", 0)
         )
     }
 
     var dynamicThemeEnabled by remember {
         mutableStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getBoolean("dynamic_theme", false)
+        )
+    }
+
+    var equalizerEnabled by remember {
+        mutableStateOf(
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getBoolean("equalizer_enabled", true)
+        )
+    }
+
+    var selectedEqualizerPreset by remember {
+        mutableStateOf(
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+                .getString(
+                    "equalizer_preset",
+                    EqualizerPreset.FLAT.name
+                ) ?: EqualizerPreset.FLAT.name
         )
     }
 
@@ -93,24 +105,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var sortMode by remember {
         mutableStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getString("sort_mode", "Name A-Z") ?: "Name A-Z"
         )
     }
 
     var savedSongUri by remember {
         mutableStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getString("current_song_uri", null)
         )
     }
 
     var savedPosition by remember {
         mutableIntStateOf(
-            context
-                .getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
                 .getInt("current_position_ms", 0)
         )
     }
@@ -371,6 +380,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             val positionToResume = savedPosition
 
             hasAutoResumed = true
+
             val song = songs[savedIndex]
 
             currentSongName = song.title
@@ -437,6 +447,43 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                             Context.MODE_PRIVATE
                         ).edit {
                             putBoolean("dynamic_theme", enabled)
+                        }
+                    },
+                    equalizerEnabled = equalizerEnabled,
+                    onEqualizerEnabledChange = { enabled ->
+                        equalizerEnabled = enabled
+
+                        context.getSharedPreferences(
+                            "mused_prefs",
+                            Context.MODE_PRIVATE
+                        ).edit {
+                            putBoolean("equalizer_enabled", enabled)
+                        }
+                    },
+                    selectedEqualizerPreset = when (selectedEqualizerPreset) {
+                        EqualizerPreset.BASS_BOOST.name -> "Bass Boost"
+                        EqualizerPreset.VOCAL.name -> "Vocal"
+                        EqualizerPreset.ROCK.name -> "Rock"
+                        EqualizerPreset.CLASSICAL.name -> "Classical"
+                        else -> "Flat"
+                    },
+                    onEqualizerPresetSelected = { preset ->
+                        selectedEqualizerPreset = when (preset) {
+                            "Bass Boost" -> EqualizerPreset.BASS_BOOST.name
+                            "Vocal" -> EqualizerPreset.VOCAL.name
+                            "Rock" -> EqualizerPreset.ROCK.name
+                            "Classical" -> EqualizerPreset.CLASSICAL.name
+                            else -> EqualizerPreset.FLAT.name
+                        }
+
+                        context.getSharedPreferences(
+                            "mused_prefs",
+                            Context.MODE_PRIVATE
+                        ).edit {
+                            putString(
+                                "equalizer_preset",
+                                selectedEqualizerPreset
+                            )
                         }
                     },
                     onBack = {
