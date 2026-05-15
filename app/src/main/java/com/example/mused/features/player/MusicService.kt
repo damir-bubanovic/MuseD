@@ -1,5 +1,7 @@
 package com.example.mused.features.player
 
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -15,7 +17,13 @@ class MusicService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
         player = ExoPlayer.Builder(this).build().apply {
+            setAudioAttributes(audioAttributes, true)
             playWhenReady = false
             repeatMode = Player.REPEAT_MODE_OFF
             shuffleModeEnabled = false
