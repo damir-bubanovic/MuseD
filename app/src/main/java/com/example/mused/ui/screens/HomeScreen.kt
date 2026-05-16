@@ -544,6 +544,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     modifier = modifier,
                     selectedFolderUris = selectedFolderUris,
                     songs = songs,
+                    sortedSongs = homeViewModel.sortedSongs(),
                     currentSongIndex = playbackUiState.currentSongIndex,
                     currentSongName = playbackUiState.currentSongName,
                     currentSongUri = playbackUiState.currentSongUri,

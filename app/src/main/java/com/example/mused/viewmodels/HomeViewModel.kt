@@ -287,6 +287,54 @@ class HomeViewModel(
             )
     }
 
+    fun filteredSongs(): List<SongData> {
+        return songs.filter { song ->
+            song.title.contains(
+                searchQuery,
+                ignoreCase = true
+            ) ||
+                    song.artist.contains(
+                        searchQuery,
+                        ignoreCase = true
+                    ) ||
+                    song.album.orEmpty().contains(
+                        searchQuery,
+                        ignoreCase = true
+                    )
+        }
+    }
+
+    fun sortedSongs(): List<SongData> {
+        val filteredSongs =
+            filteredSongs()
+
+        return when (sortMode) {
+            "Name Z-A" -> {
+                filteredSongs.sortedByDescending { song ->
+                    song.title
+                }
+            }
+
+            "Newest First" -> {
+                filteredSongs.sortedByDescending { song ->
+                    song.lastModified
+                }
+            }
+
+            "Oldest First" -> {
+                filteredSongs.sortedBy { song ->
+                    song.lastModified
+                }
+            }
+
+            else -> {
+                filteredSongs.sortedBy { song ->
+                    song.title
+                }
+            }
+        }
+    }
+
     private fun saveSelectedFolders() {
         prefs.edit {
             putStringSet(

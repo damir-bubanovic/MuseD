@@ -42,6 +42,7 @@ fun LibraryScreen(
     modifier: Modifier = Modifier,
     selectedFolderUris: List<String>,
     songs: List<SongData>,
+    sortedSongs: List<SongData>,
     currentSongIndex: Int?,
     currentSongName: String?,
     currentSongUri: String?,
@@ -59,30 +60,6 @@ fun LibraryScreen(
     onPlayPause: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val filteredSongs = songs.filter { song ->
-        song.title.contains(searchQuery, ignoreCase = true) ||
-                song.artist.contains(searchQuery, ignoreCase = true) ||
-                song.album.orEmpty().contains(searchQuery, ignoreCase = true)
-    }
-
-    val sortedSongs = when (sortMode) {
-        "Name Z-A" -> filteredSongs.sortedByDescending { song ->
-            song.title
-        }
-
-        "Newest First" -> filteredSongs.sortedByDescending { song ->
-            song.lastModified
-        }
-
-        "Oldest First" -> filteredSongs.sortedBy { song ->
-            song.lastModified
-        }
-
-        else -> filteredSongs.sortedBy { song ->
-            song.title
-        }
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
