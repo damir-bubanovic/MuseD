@@ -44,6 +44,34 @@ class HomeViewModel(
         ) ?: DEFAULT_SORT_MODE
         private set
 
+    var savedSongUri: String? =
+        prefs.getString(
+            CURRENT_SONG_URI_KEY,
+            null
+        )
+        private set
+
+    var savedPosition: Int =
+        prefs.getInt(
+            CURRENT_POSITION_KEY,
+            0
+        )
+        private set
+
+    var shuffleEnabled: Boolean =
+        prefs.getBoolean(
+            SHUFFLE_ENABLED_KEY,
+            false
+        )
+        private set
+
+    var repeatMode: Int =
+        prefs.getInt(
+            REPEAT_MODE_KEY,
+            0
+        )
+        private set
+
     fun loadSongsFromSelectedFolders(): List<SongData> {
         val loadedSongs =
             loadSongDataFromFolders(
@@ -109,6 +137,40 @@ class HomeViewModel(
         return sortMode
     }
 
+    fun savePlaybackState(
+        songUri: String?,
+        position: Int,
+        shuffleEnabled: Boolean,
+        repeatMode: Int
+    ) {
+        savedSongUri = songUri
+        savedPosition = position
+        this.shuffleEnabled = shuffleEnabled
+        this.repeatMode = repeatMode
+
+        prefs.edit {
+            putString(
+                CURRENT_SONG_URI_KEY,
+                songUri
+            )
+
+            putInt(
+                CURRENT_POSITION_KEY,
+                position
+            )
+
+            putBoolean(
+                SHUFFLE_ENABLED_KEY,
+                shuffleEnabled
+            )
+
+            putInt(
+                REPEAT_MODE_KEY,
+                repeatMode
+            )
+        }
+    }
+
     private fun saveSelectedFolders() {
         prefs.edit {
             putStringSet(
@@ -120,6 +182,7 @@ class HomeViewModel(
 
     companion object {
         private const val PREFS_NAME = "mused_prefs"
+
         private const val SELECTED_FOLDER_URIS_KEY =
             "selected_folder_uris"
 
@@ -128,5 +191,17 @@ class HomeViewModel(
 
         private const val DEFAULT_SORT_MODE =
             "Name A-Z"
+
+        private const val CURRENT_SONG_URI_KEY =
+            "current_song_uri"
+
+        private const val CURRENT_POSITION_KEY =
+            "current_position_ms"
+
+        private const val SHUFFLE_ENABLED_KEY =
+            "shuffle_enabled"
+
+        private const val REPEAT_MODE_KEY =
+            "repeat_mode"
     }
 }

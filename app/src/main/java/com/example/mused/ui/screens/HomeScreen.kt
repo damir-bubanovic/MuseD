@@ -57,17 +57,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var playbackDuration by remember { mutableIntStateOf(0) }
 
     var isShuffleEnabled by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getBoolean("shuffle_enabled", false)
-        )
+        mutableStateOf(homeViewModel.shuffleEnabled)
     }
 
     var selectedRepeatMode by remember {
-        mutableIntStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getInt("repeat_mode", 0)
-        )
+        mutableIntStateOf(homeViewModel.repeatMode)
     }
 
     var dynamicThemeEnabled by remember {
@@ -105,17 +99,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var savedSongUri by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getString("current_song_uri", null)
-        )
+        mutableStateOf(homeViewModel.savedSongUri)
     }
 
     var savedPosition by remember {
-        mutableIntStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getInt("current_position_ms", 0)
-        )
+        mutableIntStateOf(homeViewModel.savedPosition)
     }
 
     var hasAutoResumed by remember { mutableStateOf(false) }
@@ -188,22 +176,33 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun savePlaybackState() {
-        val currentIndex = currentSongIndex ?: return
-        val currentFileUri = songs.getOrNull(currentIndex)?.uri ?: return
-        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
+        val currentIndex =
+            currentSongIndex ?: return
+
+        val currentFileUri =
+            songs.getOrNull(currentIndex)?.uri ?: return
+
+        val currentPosition =
+            mediaController?.currentPosition?.toInt() ?: 0
 
         savedSongUri = currentFileUri
         savedPosition = currentPosition
+
+        homeViewModel.savePlaybackState(
+            songUri = currentFileUri,
+            position = currentPosition,
+            shuffleEnabled = isShuffleEnabled,
+            repeatMode = selectedRepeatMode
+        )
 
         context.getSharedPreferences(
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-            putString("current_song_uri", currentFileUri)
-            putInt("current_song_index", currentIndex)
-            putInt("current_position_ms", currentPosition)
-            putBoolean("shuffle_enabled", isShuffleEnabled)
-            putInt("repeat_mode", selectedRepeatMode)
+            putInt(
+                "current_song_index",
+                currentIndex
+            )
         }
     }
 
