@@ -49,6 +49,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
     implementation("androidx.documentfile:documentfile:1.1.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.media3:media3-exoplayer:1.10.0")

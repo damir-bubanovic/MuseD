@@ -13,19 +13,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.example.mused.features.folders.loadSongDataFromFolders
 import com.example.mused.features.folders.rememberFolderPickerLauncher
-import com.example.mused.features.library.clearSongCache
-import com.example.mused.features.library.loadSongCache
-import com.example.mused.features.library.saveSongCache
 import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.buildMediaItems
+import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
@@ -34,21 +32,17 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val homeViewModel: HomeViewModel = viewModel()
 
     var showPlayerScreen by remember { mutableStateOf(false) }
     var showSettingsScreen by remember { mutableStateOf(false) }
 
     var selectedFolderUris by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getStringSet("selected_folder_uris", emptySet())
-                ?.toList()
-                ?: emptyList()
-        )
+        mutableStateOf(homeViewModel.selectedFolderUris)
     }
 
     var songs by remember {
-        mutableStateOf(loadSongCache(context))
+        mutableStateOf(homeViewModel.songs)
     }
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
@@ -100,14 +94,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember {
+        mutableStateOf(homeViewModel.searchQuery)
+    }
+
     var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getString("sort_mode", "Name A-Z") ?: "Name A-Z"
-        )
+        mutableStateOf(homeViewModel.sortMode)
     }
 
     var savedSongUri by remember {
@@ -125,6 +119,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var hasAutoResumed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (selectedFolderUris.isNotEmpty()) {
+            songs = homeViewModel.loadSongsFromSelectedFolders()
+        }
+    }
 
     LaunchedEffect(Unit) {
         val sessionToken = SessionToken(
@@ -185,16 +185,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 controller.removeListener(listener)
             }
         }
-    }
-
-    LaunchedEffect(selectedFolderUris) {
-        val loadedSongs = loadSongDataFromFolders(
-            context,
-            selectedFolderUris
-        )
-
-        songs = loadedSongs
-        saveSongCache(context, loadedSongs)
     }
 
     fun savePlaybackState() {
@@ -305,9 +295,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     fun clearFolders() {
         mediaController?.pause()
 
-        selectedFolderUris = emptyList()
-        songs = emptyList()
-        clearSongCache(context)
+        songs = homeViewModel.clearFolders()
+        selectedFolderUris = homeViewModel.selectedFolderUris
 
         currentSongName = null
         currentSongIndex = null
@@ -328,7 +317,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-            remove("selected_folder_uris")
             remove("current_song_uri")
             remove("current_song_index")
             remove("current_position_ms")
@@ -400,28 +388,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 return@rememberFolderPickerLauncher
             }
 
-            selectedFolderUris =
-                (selectedFolderUris + folderUri).distinct()
-
+            songs = homeViewModel.addFolder(folderUri)
+            selectedFolderUris = homeViewModel.selectedFolderUris
             hasAutoResumed = false
-
-            context.getSharedPreferences(
-                "mused_prefs",
-                Context.MODE_PRIVATE
-            ).edit {
-                putStringSet(
-                    "selected_folder_uris",
-                    selectedFolderUris.toSet()
-                )
-            }
-
-            val loadedSongs = loadSongDataFromFolders(
-                context,
-                selectedFolderUris
-            )
-
-            songs = loadedSongs
-            saveSongCache(context, loadedSongs)
         }
 
     AnimatedContent(
@@ -606,49 +575,20 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     searchQuery = searchQuery,
                     sortMode = sortMode,
                     onSearchChange = { newSearchQuery ->
-                        searchQuery = newSearchQuery
+                        searchQuery =
+                            homeViewModel.updateSearchQuery(newSearchQuery)
                     },
                     onSortModeChange = { newSortMode ->
-                        sortMode = newSortMode
-
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putString(
-                                "sort_mode",
-                                newSortMode
-                            )
-                        }
+                        sortMode =
+                            homeViewModel.updateSortMode(newSortMode)
                     },
                     onPickFolder = {
                         openFolderPicker()
                     },
                     onRemoveFolder = { folderUriToRemove ->
-                        selectedFolderUris =
-                            selectedFolderUris.filter {
-                                it != folderUriToRemove
-                            }
-
+                        songs = homeViewModel.removeFolder(folderUriToRemove)
+                        selectedFolderUris = homeViewModel.selectedFolderUris
                         hasAutoResumed = false
-
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putStringSet(
-                                "selected_folder_uris",
-                                selectedFolderUris.toSet()
-                            )
-                        }
-
-                        val loadedSongs = loadSongDataFromFolders(
-                            context,
-                            selectedFolderUris
-                        )
-
-                        songs = loadedSongs
-                        saveSongCache(context, loadedSongs)
                     },
                     onPlaySong = { index ->
                         playSong(index)
