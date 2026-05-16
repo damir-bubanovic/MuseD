@@ -22,7 +22,6 @@ import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.MusicService
-import com.example.mused.features.player.buildMediaItems
 import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -333,10 +332,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         savedSongUri = song.uri
 
         mediaController?.apply {
-            val mediaItems =
-                buildMediaItems(context, songs)
-
-            setMediaItems(mediaItems, index, 0L)
+            setMediaItems(
+                homeViewModel.mediaItems,
+                index,
+                0L
+            )
 
             shuffleModeEnabled = isShuffleEnabled
 

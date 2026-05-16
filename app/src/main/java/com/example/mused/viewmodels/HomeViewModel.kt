@@ -9,6 +9,10 @@ import com.example.mused.features.library.clearSongCache
 import com.example.mused.features.library.loadSongCache
 import com.example.mused.features.library.saveSongCache
 import com.example.mused.models.SongData
+import androidx.media3.common.MediaItem
+import com.example.mused.features.player.buildMediaItems
+
+
 
 class HomeViewModel(
     application: Application
@@ -32,6 +36,9 @@ class HomeViewModel(
 
     var songs: List<SongData> =
         loadSongCache(appContext)
+        private set
+
+    var mediaItems: List<MediaItem> = emptyList()
         private set
 
     var searchQuery: String = ""
@@ -81,6 +88,11 @@ class HomeViewModel(
 
         songs = loadedSongs
 
+        mediaItems = buildMediaItems(
+            appContext,
+            loadedSongs
+        )
+
         saveSongCache(
             appContext,
             loadedSongs
@@ -112,6 +124,7 @@ class HomeViewModel(
     fun clearFolders(): List<SongData> {
         selectedFolderUris = emptyList()
         songs = emptyList()
+        mediaItems = emptyList()
 
         clearSongCache(appContext)
 
