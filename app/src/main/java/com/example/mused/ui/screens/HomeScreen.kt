@@ -158,11 +158,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         currentSongUri = currentSong.uri
                         savedSongUri = currentSong.uri
                         playbackPosition = 0
+
+                        homeViewModel.setCurrentSong(
+                            songName = currentSong.title,
+                            songUri = currentSong.uri,
+                            songIndex = index
+                        )
                     }
                 }
 
                 override fun onIsPlayingChanged(isPlayingNow: Boolean) {
                     isPlaying = isPlayingNow
+
+                    homeViewModel.setIsPlaying(
+                        isPlayingNow
+                    )
                 }
             }
 
@@ -214,6 +224,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 mediaController?.duration
                     ?.takeIf { it > 0 }
                     ?.toInt() ?: 0
+
+            homeViewModel.setPlaybackPosition(
+                position = playbackPosition,
+                duration = playbackDuration
+            )
 
             savePlaybackState()
 

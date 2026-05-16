@@ -4,15 +4,14 @@ import android.app.Application
 import android.content.Context
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
+import androidx.media3.common.MediaItem
 import com.example.mused.features.folders.loadSongDataFromFolders
 import com.example.mused.features.library.clearSongCache
 import com.example.mused.features.library.loadSongCache
 import com.example.mused.features.library.saveSongCache
-import com.example.mused.models.SongData
-import androidx.media3.common.MediaItem
 import com.example.mused.features.player.buildMediaItems
-
-
+import com.example.mused.models.PlaybackUiState
+import com.example.mused.models.SongData
 
 class HomeViewModel(
     application: Application
@@ -76,6 +75,13 @@ class HomeViewModel(
         prefs.getInt(
             REPEAT_MODE_KEY,
             0
+        )
+        private set
+
+    var playbackUiState =
+        PlaybackUiState(
+            shuffleEnabled = shuffleEnabled,
+            repeatMode = repeatMode
         )
         private set
 
@@ -161,27 +167,52 @@ class HomeViewModel(
         this.shuffleEnabled = shuffleEnabled
         this.repeatMode = repeatMode
 
+        playbackUiState =
+            playbackUiState.copy(
+                playbackPosition = position,
+                shuffleEnabled = shuffleEnabled,
+                repeatMode = repeatMode
+            )
+
         prefs.edit {
-            putString(
-                CURRENT_SONG_URI_KEY,
-                songUri
-            )
-
-            putInt(
-                CURRENT_POSITION_KEY,
-                position
-            )
-
-            putBoolean(
-                SHUFFLE_ENABLED_KEY,
-                shuffleEnabled
-            )
-
-            putInt(
-                REPEAT_MODE_KEY,
-                repeatMode
-            )
+            putString(CURRENT_SONG_URI_KEY, songUri)
+            putInt(CURRENT_POSITION_KEY, position)
+            putBoolean(SHUFFLE_ENABLED_KEY, shuffleEnabled)
+            putInt(REPEAT_MODE_KEY, repeatMode)
         }
+    }
+
+    fun setCurrentSong(
+        songName: String?,
+        songUri: String?,
+        songIndex: Int?
+    ) {
+        playbackUiState =
+            playbackUiState.copy(
+                currentSongName = songName,
+                currentSongUri = songUri,
+                currentSongIndex = songIndex
+            )
+    }
+
+    fun setIsPlaying(
+        isPlaying: Boolean
+    ) {
+        playbackUiState =
+            playbackUiState.copy(
+                isPlaying = isPlaying
+            )
+    }
+
+    fun setPlaybackPosition(
+        position: Int,
+        duration: Int
+    ) {
+        playbackUiState =
+            playbackUiState.copy(
+                playbackPosition = position,
+                playbackDuration = duration
+            )
     }
 
     private fun saveSelectedFolders() {
@@ -195,26 +226,12 @@ class HomeViewModel(
 
     companion object {
         private const val PREFS_NAME = "mused_prefs"
-
-        private const val SELECTED_FOLDER_URIS_KEY =
-            "selected_folder_uris"
-
-        private const val SORT_MODE_KEY =
-            "sort_mode"
-
-        private const val DEFAULT_SORT_MODE =
-            "Name A-Z"
-
-        private const val CURRENT_SONG_URI_KEY =
-            "current_song_uri"
-
-        private const val CURRENT_POSITION_KEY =
-            "current_position_ms"
-
-        private const val SHUFFLE_ENABLED_KEY =
-            "shuffle_enabled"
-
-        private const val REPEAT_MODE_KEY =
-            "repeat_mode"
+        private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
+        private const val SORT_MODE_KEY = "sort_mode"
+        private const val DEFAULT_SORT_MODE = "Name A-Z"
+        private const val CURRENT_SONG_URI_KEY = "current_song_uri"
+        private const val CURRENT_POSITION_KEY = "current_position_ms"
+        private const val SHUFFLE_ENABLED_KEY = "shuffle_enabled"
+        private const val REPEAT_MODE_KEY = "repeat_mode"
     }
 }
