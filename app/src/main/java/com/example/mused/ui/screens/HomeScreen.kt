@@ -20,7 +20,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
-import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.MusicService
 import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
@@ -48,7 +47,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
     var currentSongIndex by remember { mutableStateOf<Int?>(null) }
-
     var isPlaying by remember { mutableStateOf(false) }
 
     var playbackPosition by remember { mutableIntStateOf(0) }
@@ -63,27 +61,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var dynamicThemeEnabled by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getBoolean("dynamic_theme", false)
-        )
+        mutableStateOf(homeViewModel.dynamicThemeEnabled)
     }
 
     var equalizerEnabled by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getBoolean("equalizer_enabled", true)
-        )
-    }
-
-    var selectedEqualizerPreset by remember {
-        mutableStateOf(
-            context.getSharedPreferences("mused_prefs", Context.MODE_PRIVATE)
-                .getString(
-                    "equalizer_preset",
-                    EqualizerPreset.FLAT.name
-                ) ?: EqualizerPreset.FLAT.name
-        )
+        mutableStateOf(homeViewModel.equalizerEnabled)
     }
 
     var searchQuery by remember {
@@ -166,10 +148,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
                 override fun onIsPlayingChanged(isPlayingNow: Boolean) {
                     isPlaying = isPlayingNow
-
-                    homeViewModel.setIsPlaying(
-                        isPlayingNow
-                    )
+                    homeViewModel.setIsPlaying(isPlayingNow)
                 }
             }
 
@@ -182,14 +161,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun savePlaybackState() {
-        val currentIndex =
-            currentSongIndex ?: return
-
-        val currentFileUri =
-            songs.getOrNull(currentIndex)?.uri ?: return
-
-        val currentPosition =
-            mediaController?.currentPosition?.toInt() ?: 0
+        val currentIndex = currentSongIndex ?: return
+        val currentFileUri = songs.getOrNull(currentIndex)?.uri ?: return
+        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
 
         savedSongUri = currentFileUri
         savedPosition = currentPosition
@@ -205,10 +179,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             "mused_prefs",
             Context.MODE_PRIVATE
         ).edit {
-            putInt(
-                "current_song_index",
-                currentIndex
-            )
+            putInt("current_song_index", currentIndex)
         }
     }
 
@@ -246,12 +217,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        val intentFilter =
-            IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-
         context.registerReceiver(
             noisyReceiver,
-            intentFilter
+            IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
         )
 
         onDispose {
@@ -403,10 +371,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             val positionToResume = savedPosition
 
             hasAutoResumed = true
+            currentSongIndex = savedIndex
 
             val song = songs[savedIndex]
-
-            currentSongIndex = savedIndex
 
             homeViewModel.setCurrentSong(
                 songName = song.title,
@@ -448,51 +415,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     currentSortMode = sortMode,
                     dynamicThemeEnabled = dynamicThemeEnabled,
                     onDynamicThemeChange = { enabled ->
-                        dynamicThemeEnabled = enabled
-
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putBoolean("dynamic_theme", enabled)
-                        }
+                        dynamicThemeEnabled =
+                            homeViewModel.updateDynamicTheme(enabled)
                     },
                     equalizerEnabled = equalizerEnabled,
                     onEqualizerEnabledChange = { enabled ->
-                        equalizerEnabled = enabled
-
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putBoolean("equalizer_enabled", enabled)
-                        }
+                        equalizerEnabled =
+                            homeViewModel.updateEqualizerEnabled(enabled)
                     },
-                    selectedEqualizerPreset = when (selectedEqualizerPreset) {
-                        EqualizerPreset.BASS_BOOST.name -> "Bass Boost"
-                        EqualizerPreset.VOCAL.name -> "Vocal"
-                        EqualizerPreset.ROCK.name -> "Rock"
-                        EqualizerPreset.CLASSICAL.name -> "Classical"
-                        else -> "Flat"
-                    },
+                    selectedEqualizerPreset =
+                        homeViewModel.selectedEqualizerPresetLabel(),
                     onEqualizerPresetSelected = { preset ->
-                        selectedEqualizerPreset = when (preset) {
-                            "Bass Boost" -> EqualizerPreset.BASS_BOOST.name
-                            "Vocal" -> EqualizerPreset.VOCAL.name
-                            "Rock" -> EqualizerPreset.ROCK.name
-                            "Classical" -> EqualizerPreset.CLASSICAL.name
-                            else -> EqualizerPreset.FLAT.name
-                        }
-
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putString(
-                                "equalizer_preset",
-                                selectedEqualizerPreset
-                            )
-                        }
+                        homeViewModel.updateEqualizerPreset(preset)
                     },
                     onBack = {
                         showSettingsScreen = false
@@ -570,12 +504,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         isShuffleEnabled = !isShuffleEnabled
                         mediaController?.shuffleModeEnabled = isShuffleEnabled
 
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putBoolean("shuffle_enabled", isShuffleEnabled)
-                        }
+                        homeViewModel.savePlaybackState(
+                            songUri = savedSongUri,
+                            position = playbackPosition,
+                            shuffleEnabled = isShuffleEnabled,
+                            repeatMode = selectedRepeatMode
+                        )
                     },
                     onChangeRepeatMode = {
                         selectedRepeatMode =
@@ -588,12 +522,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                                 else -> Player.REPEAT_MODE_OFF
                             }
 
-                        context.getSharedPreferences(
-                            "mused_prefs",
-                            Context.MODE_PRIVATE
-                        ).edit {
-                            putInt("repeat_mode", selectedRepeatMode)
-                        }
+                        homeViewModel.savePlaybackState(
+                            songUri = savedSongUri,
+                            position = playbackPosition,
+                            shuffleEnabled = isShuffleEnabled,
+                            repeatMode = selectedRepeatMode
+                        )
                     },
                     onQueueSongClick = { index ->
                         playSong(index)

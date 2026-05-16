@@ -9,6 +9,7 @@ import com.example.mused.features.folders.loadSongDataFromFolders
 import com.example.mused.features.library.clearSongCache
 import com.example.mused.features.library.loadSongCache
 import com.example.mused.features.library.saveSongCache
+import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.buildMediaItems
 import com.example.mused.models.PlaybackUiState
 import com.example.mused.models.SongData
@@ -48,6 +49,27 @@ class HomeViewModel(
             SORT_MODE_KEY,
             DEFAULT_SORT_MODE
         ) ?: DEFAULT_SORT_MODE
+        private set
+
+    var dynamicThemeEnabled: Boolean =
+        prefs.getBoolean(
+            DYNAMIC_THEME_KEY,
+            false
+        )
+        private set
+
+    var equalizerEnabled: Boolean =
+        prefs.getBoolean(
+            EQUALIZER_ENABLED_KEY,
+            true
+        )
+        private set
+
+    var selectedEqualizerPreset: String =
+        prefs.getString(
+            EQUALIZER_PRESET_KEY,
+            EqualizerPreset.FLAT.name
+        ) ?: EqualizerPreset.FLAT.name
         private set
 
     var savedSongUri: String? =
@@ -156,6 +178,56 @@ class HomeViewModel(
         return sortMode
     }
 
+    fun updateDynamicTheme(enabled: Boolean): Boolean {
+        dynamicThemeEnabled = enabled
+
+        prefs.edit {
+            putBoolean(DYNAMIC_THEME_KEY, enabled)
+        }
+
+        return dynamicThemeEnabled
+    }
+
+    fun updateEqualizerEnabled(enabled: Boolean): Boolean {
+        equalizerEnabled = enabled
+
+        prefs.edit {
+            putBoolean(EQUALIZER_ENABLED_KEY, enabled)
+        }
+
+        return equalizerEnabled
+    }
+
+    fun updateEqualizerPreset(presetLabel: String): String {
+        selectedEqualizerPreset =
+            when (presetLabel) {
+                "Bass Boost" -> EqualizerPreset.BASS_BOOST.name
+                "Vocal" -> EqualizerPreset.VOCAL.name
+                "Rock" -> EqualizerPreset.ROCK.name
+                "Classical" -> EqualizerPreset.CLASSICAL.name
+                else -> EqualizerPreset.FLAT.name
+            }
+
+        prefs.edit {
+            putString(
+                EQUALIZER_PRESET_KEY,
+                selectedEqualizerPreset
+            )
+        }
+
+        return selectedEqualizerPreset
+    }
+
+    fun selectedEqualizerPresetLabel(): String {
+        return when (selectedEqualizerPreset) {
+            EqualizerPreset.BASS_BOOST.name -> "Bass Boost"
+            EqualizerPreset.VOCAL.name -> "Vocal"
+            EqualizerPreset.ROCK.name -> "Rock"
+            EqualizerPreset.CLASSICAL.name -> "Classical"
+            else -> "Flat"
+        }
+    }
+
     fun savePlaybackState(
         songUri: String?,
         position: Int,
@@ -229,6 +301,9 @@ class HomeViewModel(
         private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
         private const val SORT_MODE_KEY = "sort_mode"
         private const val DEFAULT_SORT_MODE = "Name A-Z"
+        private const val DYNAMIC_THEME_KEY = "dynamic_theme"
+        private const val EQUALIZER_ENABLED_KEY = "equalizer_enabled"
+        private const val EQUALIZER_PRESET_KEY = "equalizer_preset"
         private const val CURRENT_SONG_URI_KEY = "current_song_uri"
         private const val CURRENT_POSITION_KEY = "current_position_ms"
         private const val SHUFFLE_ENABLED_KEY = "shuffle_enabled"
