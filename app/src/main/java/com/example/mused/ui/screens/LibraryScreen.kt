@@ -60,7 +60,9 @@ fun LibraryScreen(
     onOpenSettings: () -> Unit,
 ) {
     val filteredSongs = songs.filter { song ->
-        song.title.contains(searchQuery, ignoreCase = true)
+        song.title.contains(searchQuery, ignoreCase = true) ||
+                song.artist.contains(searchQuery, ignoreCase = true) ||
+                song.album.orEmpty().contains(searchQuery, ignoreCase = true)
     }
 
     val sortedSongs = when (sortMode) {
@@ -147,7 +149,12 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                            .padding(
+                                start = 10.dp,
+                                end = 4.dp,
+                                top = 6.dp,
+                                bottom = 6.dp
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -239,7 +246,11 @@ fun LibraryScreen(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             itemsIndexed(sortedSongs) { _, song ->
-                val index = songs.indexOfFirst { it.uri == song.uri }
+                val index =
+                    songs.indexOfFirst { librarySong ->
+                        librarySong.uri == song.uri
+                    }
+
                 val isCurrentSong = index == currentSongIndex
 
                 val animatedCardColor by animateColorAsState(
@@ -255,7 +266,10 @@ fun LibraryScreen(
                     label = "SongRowElevationAnimation"
                 )
 
-                val pulseTransition = rememberInfiniteTransition(label = "NowPlayingPulseTransition")
+                val pulseTransition =
+                    rememberInfiniteTransition(
+                        label = "NowPlayingPulseTransition"
+                    )
 
                 val pulseScale by pulseTransition.animateFloat(
                     initialValue = 1f,
@@ -270,7 +284,11 @@ fun LibraryScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onPlaySong(index) },
+                        .clickable {
+                            if (index != -1) {
+                                onPlaySong(index)
+                            }
+                        },
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = animatedCardColor
@@ -290,8 +308,10 @@ fun LibraryScreen(
                             modifier = Modifier
                                 .width(24.dp)
                                 .graphicsLayer {
-                                    scaleX = if (isCurrentSong && isPlaying) pulseScale else 1f
-                                    scaleY = if (isCurrentSong && isPlaying) pulseScale else 1f
+                                    scaleX =
+                                        if (isCurrentSong && isPlaying) pulseScale else 1f
+                                    scaleY =
+                                        if (isCurrentSong && isPlaying) pulseScale else 1f
                                 },
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -299,19 +319,31 @@ fun LibraryScreen(
 
                         Spacer(Modifier.width(6.dp))
 
-                        Text(
-                            text = song.title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (isCurrentSong)
-                                FontWeight.Bold
-                            else
-                                FontWeight.Normal,
-                            color = if (isCurrentSong)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = song.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isCurrentSong)
+                                    FontWeight.Bold
+                                else
+                                    FontWeight.Normal,
+                                color = if (isCurrentSong)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+
+                            Text(
+                                text = song.artist,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isCurrentSong)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -339,7 +371,8 @@ fun LibraryScreen(
                         LinearProgressIndicator(
                             progress = {
                                 if (playbackDuration > 0) {
-                                    playbackPosition.toFloat() / playbackDuration.toFloat()
+                                    playbackPosition.toFloat() /
+                                            playbackDuration.toFloat()
                                 } else {
                                     0f
                                 }
@@ -373,7 +406,10 @@ fun LibraryScreen(
 
                             IconButton(onClick = onPlayPause) {
                                 Icon(
-                                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    if (isPlaying)
+                                        Icons.Filled.Pause
+                                    else
+                                        Icons.Filled.PlayArrow,
                                     contentDescription = "Play/Pause",
                                     tint = MaterialTheme.colorScheme.primary
                                 )
