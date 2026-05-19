@@ -46,7 +46,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
-    var currentSongIndex by remember { mutableStateOf<Int?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
 
     var playbackPosition by remember { mutableIntStateOf(0) }
@@ -134,7 +133,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     val currentSong = songs.getOrNull(index)
 
                     if (currentSong != null) {
-                        currentSongIndex = index
                         savedSongUri = currentSong.uri
                         playbackPosition = 0
 
@@ -161,9 +159,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     fun savePlaybackState() {
-        val currentIndex = currentSongIndex ?: return
-        val currentFileUri = songs.getOrNull(currentIndex)?.uri ?: return
-        val currentPosition = mediaController?.currentPosition?.toInt() ?: 0
+        val currentIndex =
+            homeViewModel.playbackUiState.currentSongIndex ?: return
+
+        val currentFileUri =
+            songs.getOrNull(currentIndex)?.uri ?: return
+
+        val currentPosition =
+            mediaController?.currentPosition?.toInt() ?: 0
 
         savedSongUri = currentFileUri
         savedPosition = currentPosition
@@ -247,7 +250,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     fun clearPlaybackState() {
         mediaController?.pause()
 
-        currentSongIndex = null
         savedSongUri = null
         savedPosition = 0
 
@@ -286,7 +288,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         songs = homeViewModel.clearFolders()
         selectedFolderUris = homeViewModel.selectedFolderUris
 
-        currentSongIndex = null
         savedSongUri = null
         savedPosition = 0
 
@@ -326,7 +327,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         val song = songs[index]
 
-        currentSongIndex = index
         savedSongUri = song.uri
 
         homeViewModel.setCurrentSong(
@@ -371,7 +371,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             val positionToResume = savedPosition
 
             hasAutoResumed = true
-            currentSongIndex = savedIndex
 
             val song = songs[savedIndex]
 
@@ -476,7 +475,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     },
                     onPrevious = {
                         val index =
-                            currentSongIndex ?: return@PlayerScreen
+                            playbackUiState.currentSongIndex
+                                ?: return@PlayerScreen
 
                         if (index > 0) {
                             playSong(index - 1)
@@ -494,7 +494,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     },
                     onNext = {
                         val index =
-                            currentSongIndex ?: return@PlayerScreen
+                            playbackUiState.currentSongIndex
+                                ?: return@PlayerScreen
 
                         if (index < songs.size - 1) {
                             playSong(index + 1)
