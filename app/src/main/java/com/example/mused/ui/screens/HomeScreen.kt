@@ -21,6 +21,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
+import com.example.mused.features.player.PlaybackController
 import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -132,12 +133,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 mediaController = controllerFuture.get()
 
                 mediaController?.shuffleModeEnabled = isShuffleEnabled
-
-                mediaController?.repeatMode = when (selectedRepeatMode) {
-                    1 -> Player.REPEAT_MODE_ONE
-                    2 -> Player.REPEAT_MODE_ALL
-                    else -> Player.REPEAT_MODE_OFF
-                }
+                mediaController?.repeatMode =
+                    PlaybackController.toMedia3RepeatMode(selectedRepeatMode)
             },
             MoreExecutors.directExecutor()
         )
@@ -268,23 +265,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(sleepTimerRemainingSeconds) {
-        val remainingSeconds =
-            sleepTimerRemainingSeconds ?: return@LaunchedEffect
-
-        if (remainingSeconds <= 0) {
-            mediaController?.pause()
-            savePlaybackState()
-            sleepTimerRemainingSeconds = null
-            return@LaunchedEffect
-        }
-
-        delay(1000L)
-
-        sleepTimerRemainingSeconds =
-            remainingSeconds - 1
-    }
-
     fun clearPlaybackState() {
         mediaController?.pause()
 
@@ -358,50 +338,90 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    fun playSong(index: Int) {
-        if (index !in songs.indices) return
+    val playbackController = remember(
+        mediaController,
+        songs,
+        homeViewModel.mediaItems,
+        isShuffleEnabled,
+        selectedRepeatMode,
+        playbackUiState.currentSongIndex,
+        playbackPosition,
+        playbackDuration,
+        savedSongUri
+    ) {
+        PlaybackController(
+            mediaControllerProvider = {
+                mediaController
+            },
+            songsProvider = {
+                songs
+            },
+            mediaItemsProvider = {
+                homeViewModel.mediaItems
+            },
+            shuffleEnabledProvider = {
+                isShuffleEnabled
+            },
+            repeatModeProvider = {
+                selectedRepeatMode
+            },
+            currentSongIndexProvider = {
+                homeViewModel.playbackUiState.currentSongIndex
+            },
+            onSongStarted = { song, index, position, duration ->
+                savedSongUri = song.uri
+                playbackPosition = position
+                playbackDuration = duration
 
-        val song = songs[index]
+                homeViewModel.setCurrentSong(
+                    songName = song.title,
+                    songUri = song.uri,
+                    songIndex = index
+                )
 
-        savedSongUri = song.uri
-        playbackDuration =
-            song.durationMs
-                .toInt()
-                .takeIf { duration -> duration > 0 }
-                ?: 0
+                homeViewModel.setPlaybackPosition(
+                    position = position,
+                    duration = duration
+                )
+            },
+            onPlaybackPositionChanged = { position, duration ->
+                playbackPosition = position
+                playbackDuration = duration
 
-        playbackPosition = 0
-        pendingSeekPosition = null
-
-        homeViewModel.setCurrentSong(
-            songName = song.title,
-            songUri = song.uri,
-            songIndex = index
-        )
-
-        homeViewModel.setPlaybackPosition(
-            position = playbackPosition,
-            duration = playbackDuration
-        )
-
-        mediaController?.apply {
-            setMediaItems(
-                homeViewModel.mediaItems,
-                index,
-                0L
-            )
-
-            shuffleModeEnabled = isShuffleEnabled
-
-            repeatMode = when (selectedRepeatMode) {
-                1 -> Player.REPEAT_MODE_ONE
-                2 -> Player.REPEAT_MODE_ALL
-                else -> Player.REPEAT_MODE_OFF
+                homeViewModel.setPlaybackPosition(
+                    position = position,
+                    duration = duration
+                )
+            },
+            onPendingSeekChanged = { pendingPosition ->
+                pendingSeekPosition = pendingPosition
+            },
+            onShuffleChanged = { enabled ->
+                isShuffleEnabled = enabled
+            },
+            onRepeatModeChanged = { repeatMode ->
+                selectedRepeatMode = repeatMode
+            },
+            savePlaybackState = {
+                savePlaybackState()
             }
+        )
+    }
 
-            prepare()
-            play()
+    LaunchedEffect(sleepTimerRemainingSeconds) {
+        val remainingSeconds =
+            sleepTimerRemainingSeconds ?: return@LaunchedEffect
+
+        if (remainingSeconds <= 0) {
+            playbackController.pauseAndSave()
+            sleepTimerRemainingSeconds = null
+            return@LaunchedEffect
         }
+
+        delay(1000L)
+
+        sleepTimerRemainingSeconds =
+            remainingSeconds - 1
     }
 
     LaunchedEffect(songs, savedSongUri, mediaController) {
@@ -435,7 +455,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 songIndex = savedIndex
             )
 
-            playSong(savedIndex)
+            playbackController.playSong(savedIndex)
 
             mediaController?.seekTo(positionToResume.toLong())
 
@@ -523,106 +543,37 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         showPlayerScreen = false
                     },
                     onSeekChange = { newPosition ->
-                        val maxDuration =
-                            playbackDuration.coerceAtLeast(1)
-
-                        val safePosition =
-                            newPosition.coerceIn(0, maxDuration)
-
-                        pendingSeekPosition = safePosition
-                        playbackPosition = safePosition
-
-                        mediaController?.seekTo(safePosition.toLong())
-
-                        homeViewModel.setPlaybackPosition(
-                            position = safePosition,
-                            duration = playbackDuration
-                        )
+                        playbackPosition =
+                            playbackController.seekTo(
+                                newPosition = newPosition,
+                                playbackDuration = playbackDuration
+                            )
                     },
                     onSeekFinished = {
-                        val maxDuration =
-                            playbackDuration.coerceAtLeast(1)
-
-                        val seekPosition =
-                            (pendingSeekPosition ?: playbackPosition)
-                                .coerceIn(0, maxDuration)
-
-                        mediaController?.seekTo(seekPosition.toLong())
-
-                        playbackPosition = seekPosition
-                        pendingSeekPosition = null
-
-                        homeViewModel.setPlaybackPosition(
-                            position = seekPosition,
-                            duration = playbackDuration
-                        )
-
-                        homeViewModel.savePlaybackState(
-                            songUri = savedSongUri,
-                            position = seekPosition,
-                            shuffleEnabled = isShuffleEnabled,
-                            repeatMode = selectedRepeatMode
-                        )
+                        playbackPosition =
+                            playbackController.finishSeek(
+                                pendingSeekPosition = pendingSeekPosition,
+                                playbackPosition = playbackPosition,
+                                playbackDuration = playbackDuration
+                            )
                     },
                     onPrevious = {
-                        val index =
-                            playbackUiState.currentSongIndex
-                                ?: return@PlayerScreen
-
-                        if (index > 0) {
-                            playSong(index - 1)
-                        }
+                        playbackController.playPrevious()
                     },
                     onPlayPause = {
-                        mediaController?.let { controller ->
-                            if (controller.isPlaying) {
-                                controller.pause()
-                                savePlaybackState()
-                            } else {
-                                controller.play()
-                            }
-                        }
+                        playbackController.togglePlayPause()
                     },
                     onNext = {
-                        val index =
-                            playbackUiState.currentSongIndex
-                                ?: return@PlayerScreen
-
-                        if (index < songs.size - 1) {
-                            playSong(index + 1)
-                        }
+                        playbackController.playNext()
                     },
                     onToggleShuffle = {
-                        isShuffleEnabled = !isShuffleEnabled
-                        mediaController?.shuffleModeEnabled = isShuffleEnabled
-
-                        homeViewModel.savePlaybackState(
-                            songUri = savedSongUri,
-                            position = playbackPosition,
-                            shuffleEnabled = isShuffleEnabled,
-                            repeatMode = selectedRepeatMode
-                        )
+                        playbackController.toggleShuffle()
                     },
                     onChangeRepeatMode = {
-                        selectedRepeatMode =
-                            (selectedRepeatMode + 1) % 3
-
-                        mediaController?.repeatMode =
-                            when (selectedRepeatMode) {
-                                1 -> Player.REPEAT_MODE_ONE
-                                2 -> Player.REPEAT_MODE_ALL
-                                else -> Player.REPEAT_MODE_OFF
-                            }
-
-                        homeViewModel.savePlaybackState(
-                            songUri = savedSongUri,
-                            position = playbackPosition,
-                            shuffleEnabled = isShuffleEnabled,
-                            repeatMode = selectedRepeatMode
-                        )
+                        playbackController.changeRepeatMode()
                     },
                     onQueueSongClick = { index ->
-                        playSong(index)
+                        playbackController.playSong(index)
                     },
                     onSleepTimerSelected = { minutes ->
                         sleepTimerRemainingSeconds =
@@ -662,21 +613,14 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         hasAutoResumed = false
                     },
                     onPlaySong = { index ->
-                        playSong(index)
+                        playbackController.playSong(index)
                         showPlayerScreen = true
                     },
                     onOpenPlayer = {
                         showPlayerScreen = true
                     },
                     onPlayPause = {
-                        mediaController?.let { controller ->
-                            if (controller.isPlaying) {
-                                controller.pause()
-                                savePlaybackState()
-                            } else {
-                                controller.play()
-                            }
-                        }
+                        playbackController.togglePlayPause()
                     },
                     onOpenSettings = {
                         showSettingsScreen = true
