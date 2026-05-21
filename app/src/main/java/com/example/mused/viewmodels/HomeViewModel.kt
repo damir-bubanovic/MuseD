@@ -2,6 +2,9 @@ package com.example.mused.viewmodels
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.MediaItem
@@ -52,17 +55,11 @@ class HomeViewModel(
         private set
 
     var dynamicThemeEnabled: Boolean =
-        prefs.getBoolean(
-            DYNAMIC_THEME_KEY,
-            false
-        )
+        prefs.getBoolean(DYNAMIC_THEME_KEY, false)
         private set
 
     var equalizerEnabled: Boolean =
-        prefs.getBoolean(
-            EQUALIZER_ENABLED_KEY,
-            true
-        )
+        prefs.getBoolean(EQUALIZER_ENABLED_KEY, true)
         private set
 
     var selectedEqualizerPreset: String =
@@ -73,38 +70,27 @@ class HomeViewModel(
         private set
 
     var savedSongUri: String? =
-        prefs.getString(
-            CURRENT_SONG_URI_KEY,
-            null
-        )
+        prefs.getString(CURRENT_SONG_URI_KEY, null)
         private set
 
     var savedPosition: Int =
-        prefs.getInt(
-            CURRENT_POSITION_KEY,
-            0
-        )
+        prefs.getInt(CURRENT_POSITION_KEY, 0)
         private set
 
     var shuffleEnabled: Boolean =
-        prefs.getBoolean(
-            SHUFFLE_ENABLED_KEY,
-            false
-        )
+        prefs.getBoolean(SHUFFLE_ENABLED_KEY, false)
         private set
 
     var repeatMode: Int =
-        prefs.getInt(
-            REPEAT_MODE_KEY,
-            0
-        )
+        prefs.getInt(REPEAT_MODE_KEY, 0)
         private set
 
-    var playbackUiState =
+    var playbackUiState by mutableStateOf(
         PlaybackUiState(
             shuffleEnabled = shuffleEnabled,
             repeatMode = repeatMode
         )
+    )
         private set
 
     fun loadSongsFromSelectedFolders(): List<SongData> {
@@ -209,10 +195,7 @@ class HomeViewModel(
             }
 
         prefs.edit {
-            putString(
-                EQUALIZER_PRESET_KEY,
-                selectedEqualizerPreset
-            )
+            putString(EQUALIZER_PRESET_KEY, selectedEqualizerPreset)
         }
 
         return selectedEqualizerPreset
@@ -267,9 +250,7 @@ class HomeViewModel(
             )
     }
 
-    fun setIsPlaying(
-        isPlaying: Boolean
-    ) {
+    fun setIsPlaying(isPlaying: Boolean) {
         playbackUiState =
             playbackUiState.copy(
                 isPlaying = isPlaying
@@ -289,49 +270,20 @@ class HomeViewModel(
 
     fun filteredSongs(): List<SongData> {
         return songs.filter { song ->
-            song.title.contains(
-                searchQuery,
-                ignoreCase = true
-            ) ||
-                    song.artist.contains(
-                        searchQuery,
-                        ignoreCase = true
-                    ) ||
-                    song.album.orEmpty().contains(
-                        searchQuery,
-                        ignoreCase = true
-                    )
+            song.title.contains(searchQuery, ignoreCase = true) ||
+                    song.artist.contains(searchQuery, ignoreCase = true) ||
+                    song.album.orEmpty().contains(searchQuery, ignoreCase = true)
         }
     }
 
     fun sortedSongs(): List<SongData> {
-        val filteredSongs =
-            filteredSongs()
+        val filteredSongs = filteredSongs()
 
         return when (sortMode) {
-            "Name Z-A" -> {
-                filteredSongs.sortedByDescending { song ->
-                    song.title
-                }
-            }
-
-            "Newest First" -> {
-                filteredSongs.sortedByDescending { song ->
-                    song.lastModified
-                }
-            }
-
-            "Oldest First" -> {
-                filteredSongs.sortedBy { song ->
-                    song.lastModified
-                }
-            }
-
-            else -> {
-                filteredSongs.sortedBy { song ->
-                    song.title
-                }
-            }
+            "Name Z-A" -> filteredSongs.sortedByDescending { it.title }
+            "Newest First" -> filteredSongs.sortedByDescending { it.lastModified }
+            "Oldest First" -> filteredSongs.sortedBy { it.lastModified }
+            else -> filteredSongs.sortedBy { it.title }
         }
     }
 

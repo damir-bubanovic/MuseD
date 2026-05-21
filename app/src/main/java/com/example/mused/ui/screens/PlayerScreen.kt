@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -20,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.components.AlbumArt
@@ -83,15 +85,41 @@ fun PlayerScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Slider(
-                value = playbackPosition.toFloat(),
-                onValueChange = { newValue ->
-                    onSeekChange(newValue.toInt())
-                },
-                onValueChangeFinished = onSeekFinished,
-                valueRange = 0f..playbackDuration.coerceAtLeast(1).toFloat(),
-                modifier = Modifier.fillMaxWidth()
-            )
+            val sliderMax = playbackDuration.coerceAtLeast(1)
+            val sliderValue = playbackPosition.coerceIn(0, sliderMax)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(sliderMax) {
+                        detectTapGestures { offset ->
+                            val width = size.width.toFloat()
+
+                            if (width > 0f) {
+                                val percent =
+                                    (offset.x / width)
+                                        .coerceIn(0f, 1f)
+
+                                val newPosition =
+                                    (sliderMax * percent).toInt()
+
+                                onSeekChange(newPosition)
+                                onSeekFinished()
+                            }
+                        }
+                    }
+            ) {
+                Slider(
+                    value = sliderValue.toFloat(),
+                    onValueChange = { newValue ->
+                        onSeekChange(newValue.toInt())
+                    },
+                    onValueChangeFinished = onSeekFinished,
+                    valueRange = 0f..sliderMax.toFloat(),
+                    enabled = playbackDuration > 0,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             Text(
                 text = "${formatTime(playbackPosition)} / ${formatTime(playbackDuration)}",
@@ -118,7 +146,10 @@ fun PlayerScreen(
                         label = "PlayPauseAnimation"
                     ) { playing ->
                         Icon(
-                            imageVector = if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            imageVector = if (playing)
+                                Icons.Filled.Pause
+                            else
+                                Icons.Filled.PlayArrow,
                             contentDescription = "Play/Pause",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(40.dp)
@@ -143,7 +174,10 @@ fun PlayerScreen(
             ) {
                 TextButton(onClick = onToggleShuffle) {
                     Text(
-                        text = if (isShuffleEnabled) "Shuffle ON" else "Shuffle OFF",
+                        text = if (isShuffleEnabled)
+                            "Shuffle ON"
+                        else
+                            "Shuffle OFF",
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -164,9 +198,17 @@ fun PlayerScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            TextButton(onClick = { showSleepTimerOptions = !showSleepTimerOptions }) {
+            TextButton(
+                onClick = {
+                    showSleepTimerOptions =
+                        !showSleepTimerOptions
+                }
+            ) {
                 Text(
-                    text = if (showSleepTimerOptions) "Hide Sleep Timer" else "Sleep Timer",
+                    text = if (showSleepTimerOptions)
+                        "Hide Sleep Timer"
+                    else
+                        "Sleep Timer",
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -176,39 +218,69 @@ fun PlayerScreen(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = { onSleepTimerSelected(15) }) {
+                    TextButton(
+                        onClick = {
+                            onSleepTimerSelected(15)
+                        }
+                    ) {
                         Text("15 min")
                     }
 
-                    TextButton(onClick = { onSleepTimerSelected(30) }) {
+                    TextButton(
+                        onClick = {
+                            onSleepTimerSelected(30)
+                        }
+                    ) {
                         Text("30 min")
                     }
 
-                    TextButton(onClick = { onSleepTimerSelected(60) }) {
+                    TextButton(
+                        onClick = {
+                            onSleepTimerSelected(60)
+                        }
+                    ) {
                         Text("60 min")
                     }
 
-                    TextButton(onClick = { onSleepTimerSelected(null) }) {
+                    TextButton(
+                        onClick = {
+                            onSleepTimerSelected(null)
+                        }
+                    ) {
                         Text("Off")
                     }
                 }
 
                 sleepTimerRemainingSeconds
-                    ?.takeIf { seconds -> seconds <= 60 }
+                    ?.takeIf { seconds ->
+                        seconds <= 60
+                    }
                     ?.let { seconds ->
                         Text(
-                            text = "Sleep timer: ${formatTime(seconds * 1000)} remaining",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            text =
+                                "Sleep timer: ${
+                                    formatTime(seconds * 1000)
+                                } remaining",
+                            style =
+                                MaterialTheme.typography.bodySmall,
+                            color =
+                                MaterialTheme.colorScheme.primary
                         )
                     }
             }
 
             Spacer(Modifier.height(8.dp))
 
-            TextButton(onClick = { showQueue = !showQueue }) {
+            TextButton(
+                onClick = {
+                    showQueue = !showQueue
+                }
+            ) {
                 Text(
-                    text = if (showQueue) "Hide Queue" else "Show Queue",
+                    text = if (showQueue)
+                        "Hide Queue"
+                    else
+                        "Show Queue",
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -235,13 +307,19 @@ fun PlayerScreen(
                             .weight(1f)
                     ) {
                         itemsIndexed(queueSongs) { index, queueSong ->
-                            val isCurrent = index == currentSongIndex
+                            val isCurrent =
+                                index == currentSongIndex
 
                             Text(
-                                text = if (isCurrent) "▶ $queueSong" else queueSong,
+                                text = if (isCurrent)
+                                    "▶ $queueSong"
+                                else
+                                    queueSong,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { onQueueSongClick(index) }
+                                    .clickable {
+                                        onQueueSongClick(index)
+                                    }
                                     .padding(vertical = 8.dp),
                                 color = if (isCurrent)
                                     MaterialTheme.colorScheme.primary
