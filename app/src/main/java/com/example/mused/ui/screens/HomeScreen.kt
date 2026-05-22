@@ -365,9 +365,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             repeatModeProvider = {
                 selectedRepeatMode
             },
-            currentSongIndexProvider = {
-                homeViewModel.playbackUiState.currentSongIndex
-            },
             onSongStarted = { song, index, position, duration ->
                 savedSongUri = song.uri
                 playbackPosition = position

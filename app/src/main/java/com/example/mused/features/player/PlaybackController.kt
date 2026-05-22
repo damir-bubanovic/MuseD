@@ -11,7 +11,6 @@ class PlaybackController(
     private val mediaItemsProvider: () -> List<MediaItem>,
     private val shuffleEnabledProvider: () -> Boolean,
     private val repeatModeProvider: () -> Int,
-    private val currentSongIndexProvider: () -> Int?,
     private val onSongStarted: (
         song: SongData,
         index: Int,
@@ -65,19 +64,22 @@ class PlaybackController(
     }
 
     fun playPrevious() {
-        val currentIndex = currentSongIndexProvider() ?: return
+        val controller = mediaControllerProvider() ?: return
 
-        if (currentIndex > 0) {
-            playSong(currentIndex - 1)
+        if (controller.hasPreviousMediaItem()) {
+            controller.seekToPreviousMediaItem()
+            controller.play()
+        } else {
+            controller.seekTo(0)
         }
     }
 
     fun playNext() {
-        val songs = songsProvider()
-        val currentIndex = currentSongIndexProvider() ?: return
+        val controller = mediaControllerProvider() ?: return
 
-        if (currentIndex < songs.size - 1) {
-            playSong(currentIndex + 1)
+        if (controller.hasNextMediaItem()) {
+            controller.seekToNextMediaItem()
+            controller.play()
         }
     }
 
