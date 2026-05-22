@@ -23,6 +23,7 @@ import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.PlaybackController
 import com.example.mused.models.SongData
 import com.example.mused.viewmodels.HomeViewModel
+import com.example.mused.viewmodels.SettingsViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
@@ -32,6 +33,7 @@ import kotlinx.coroutines.delay
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
     val playbackUiState = homeViewModel.playbackUiState
 
     var showPlayerScreen by remember { mutableStateOf(false) }
@@ -61,11 +63,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var pendingSeekPosition by remember { mutableStateOf<Int?>(null) }
 
     var dynamicThemeEnabled by remember {
-        mutableStateOf(homeViewModel.dynamicThemeEnabled)
+        mutableStateOf(settingsViewModel.dynamicThemeEnabled)
     }
 
     var equalizerEnabled by remember {
-        mutableStateOf(homeViewModel.equalizerEnabled)
+        mutableStateOf(settingsViewModel.equalizerEnabled)
     }
 
     var searchQuery by remember {
@@ -75,7 +77,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
-        mutableStateOf(homeViewModel.sortMode)
+        mutableStateOf(settingsViewModel.sortMode)
     }
 
     var savedSongUri by remember {
@@ -437,17 +439,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     dynamicThemeEnabled = dynamicThemeEnabled,
                     onDynamicThemeChange = { enabled ->
                         dynamicThemeEnabled =
-                            homeViewModel.updateDynamicTheme(enabled)
+                            settingsViewModel.updateDynamicTheme(enabled)
                     },
                     equalizerEnabled = equalizerEnabled,
                     onEqualizerEnabledChange = { enabled ->
                         equalizerEnabled =
-                            homeViewModel.updateEqualizerEnabled(enabled)
+                            settingsViewModel.updateEqualizerEnabled(enabled)
                     },
                     selectedEqualizerPreset =
-                        homeViewModel.selectedEqualizerPresetLabel(),
+                        settingsViewModel.selectedEqualizerPresetLabel(),
                     onEqualizerPresetSelected = { preset ->
-                        homeViewModel.updateEqualizerPreset(preset)
+                        settingsViewModel.updateEqualizerPreset(preset)
                     },
                     onBack = {
                         showSettingsScreen = false
@@ -526,7 +528,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     modifier = modifier,
                     selectedFolderUris = selectedFolderUris,
                     songs = songs,
-                    sortedSongs = homeViewModel.sortedSongs(),
+                    sortedSongs = homeViewModel.sortedSongs(sortMode),
                     currentSongIndex = playbackUiState.currentSongIndex,
                     currentSongName = playbackUiState.currentSongName,
                     currentSongUri = playbackUiState.currentSongUri,
@@ -541,7 +543,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     },
                     onSortModeChange = { newSortMode ->
                         sortMode =
-                            homeViewModel.updateSortMode(newSortMode)
+                            settingsViewModel.updateSortMode(newSortMode)
                     },
                     onPickFolder = {
                         openFolderPicker()
