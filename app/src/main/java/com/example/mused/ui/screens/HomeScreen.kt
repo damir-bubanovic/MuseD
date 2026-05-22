@@ -140,57 +140,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    DisposableEffect(mediaController, songs) {
-        val controller = mediaController
-
-        if (controller == null) {
-            onDispose { }
-        } else {
-            val listener = object : Player.Listener {
-                override fun onMediaItemTransition(
-                    mediaItem: MediaItem?,
-                    reason: Int
-                ) {
-                    val index = controller.currentMediaItemIndex
-                    val currentSong = songs.getOrNull(index)
-
-                    if (currentSong != null) {
-                        savedSongUri = currentSong.uri
-                        playbackPosition = 0
-                        playbackDuration =
-                            currentSong.durationMs
-                                .toInt()
-                                .takeIf { duration -> duration > 0 }
-                                ?: currentPlaybackDuration()
-
-                        pendingSeekPosition = null
-
-                        homeViewModel.setCurrentSong(
-                            songName = currentSong.title,
-                            songUri = currentSong.uri,
-                            songIndex = index
-                        )
-
-                        homeViewModel.setPlaybackPosition(
-                            position = 0,
-                            duration = playbackDuration
-                        )
-                    }
-                }
-
-                override fun onIsPlayingChanged(isPlayingNow: Boolean) {
-                    homeViewModel.setIsPlaying(isPlayingNow)
-                }
-            }
-
-            controller.addListener(listener)
-
-            onDispose {
-                controller.removeListener(listener)
-            }
-        }
-    }
-
     fun savePlaybackState() {
         val currentIndex =
             homeViewModel.playbackUiState.currentSongIndex ?: return
@@ -218,6 +167,108 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             putInt("current_song_index", currentIndex)
         }
     }
+
+    val playbackController = remember(
+        mediaController,
+        songs,
+        homeViewModel.mediaItems,
+        isShuffleEnabled,
+        selectedRepeatMode,
+        playbackUiState.currentSongIndex,
+        playbackPosition,
+        playbackDuration,
+        savedSongUri
+    ) {
+        PlaybackController(
+            mediaControllerProvider = {
+                mediaController
+            },
+            songsProvider = {
+                songs
+            },
+            mediaItemsProvider = {
+                homeViewModel.mediaItems
+            },
+            shuffleEnabledProvider = {
+                isShuffleEnabled
+            },
+            repeatModeProvider = {
+                selectedRepeatMode
+            },
+            onSongStarted = { song, index, position, duration ->
+                savedSongUri = song.uri
+                playbackPosition = position
+                playbackDuration = duration
+
+                homeViewModel.setCurrentSong(
+                    songName = song.title,
+                    songUri = song.uri,
+                    songIndex = index
+                )
+
+                homeViewModel.setPlaybackPosition(
+                    position = position,
+                    duration = duration
+                )
+            },
+            onPlaybackPositionChanged = { position, duration ->
+                playbackPosition = position
+                playbackDuration = duration
+
+                homeViewModel.setPlaybackPosition(
+                    position = position,
+                    duration = duration
+                )
+            },
+            onPendingSeekChanged = { pendingPosition ->
+                pendingSeekPosition = pendingPosition
+            },
+            onShuffleChanged = { enabled ->
+                isShuffleEnabled = enabled
+            },
+            onRepeatModeChanged = { repeatMode ->
+                selectedRepeatMode = repeatMode
+            },
+            onIsPlayingChanged = { isPlayingNow ->
+                homeViewModel.setIsPlaying(isPlayingNow)
+            },
+            savePlaybackState = {
+                savePlaybackState()
+            }
+        )
+    }
+
+
+    DisposableEffect(mediaController, songs, playbackController) {
+        val controller = mediaController
+
+        if (controller == null) {
+            onDispose { }
+        } else {
+            val listener = object : Player.Listener {
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    playbackController.handleMediaItemTransition(
+                        index = controller.currentMediaItemIndex,
+                        fallbackDuration = currentPlaybackDuration()
+                    )
+                }
+
+                override fun onIsPlayingChanged(isPlayingNow: Boolean) {
+                    playbackController.handleIsPlayingChanged(isPlayingNow)
+                }
+            }
+
+            controller.addListener(listener)
+
+            onDispose {
+                controller.removeListener(listener)
+            }
+        }
+    }
+
 
     LaunchedEffect(mediaController, playbackUiState.isPlaying) {
         while (playbackUiState.isPlaying) {
@@ -336,73 +387,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             remove("current_song_index")
             remove("current_position_ms")
         }
-    }
-
-    val playbackController = remember(
-        mediaController,
-        songs,
-        homeViewModel.mediaItems,
-        isShuffleEnabled,
-        selectedRepeatMode,
-        playbackUiState.currentSongIndex,
-        playbackPosition,
-        playbackDuration,
-        savedSongUri
-    ) {
-        PlaybackController(
-            mediaControllerProvider = {
-                mediaController
-            },
-            songsProvider = {
-                songs
-            },
-            mediaItemsProvider = {
-                homeViewModel.mediaItems
-            },
-            shuffleEnabledProvider = {
-                isShuffleEnabled
-            },
-            repeatModeProvider = {
-                selectedRepeatMode
-            },
-            onSongStarted = { song, index, position, duration ->
-                savedSongUri = song.uri
-                playbackPosition = position
-                playbackDuration = duration
-
-                homeViewModel.setCurrentSong(
-                    songName = song.title,
-                    songUri = song.uri,
-                    songIndex = index
-                )
-
-                homeViewModel.setPlaybackPosition(
-                    position = position,
-                    duration = duration
-                )
-            },
-            onPlaybackPositionChanged = { position, duration ->
-                playbackPosition = position
-                playbackDuration = duration
-
-                homeViewModel.setPlaybackPosition(
-                    position = position,
-                    duration = duration
-                )
-            },
-            onPendingSeekChanged = { pendingPosition ->
-                pendingSeekPosition = pendingPosition
-            },
-            onShuffleChanged = { enabled ->
-                isShuffleEnabled = enabled
-            },
-            onRepeatModeChanged = { repeatMode ->
-                selectedRepeatMode = repeatMode
-            },
-            savePlaybackState = {
-                savePlaybackState()
-            }
-        )
     }
 
     LaunchedEffect(sleepTimerRemainingSeconds) {

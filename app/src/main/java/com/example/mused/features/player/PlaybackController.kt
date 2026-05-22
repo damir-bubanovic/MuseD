@@ -24,6 +24,7 @@ class PlaybackController(
     private val onPendingSeekChanged: (Int?) -> Unit,
     private val onShuffleChanged: (Boolean) -> Unit,
     private val onRepeatModeChanged: (Int) -> Unit,
+    private val onIsPlayingChanged: (Boolean) -> Unit,
     private val savePlaybackState: () -> Unit
 ) {
 
@@ -164,6 +165,33 @@ class PlaybackController(
         onRepeatModeChanged(newRepeatMode)
 
         savePlaybackState()
+    }
+
+    fun handleMediaItemTransition(
+        index: Int,
+        fallbackDuration: Int
+    ) {
+        val song =
+            songsProvider().getOrNull(index) ?: return
+
+        val playbackDuration =
+            song.durationMs
+                .toInt()
+                .takeIf { duration -> duration > 0 }
+                ?: fallbackDuration
+
+        onPendingSeekChanged(null)
+
+        onSongStarted(
+            song,
+            index,
+            0,
+            playbackDuration
+        )
+    }
+
+    fun handleIsPlayingChanged(isPlaying: Boolean) {
+        onIsPlayingChanged(isPlaying)
     }
 
     companion object {
