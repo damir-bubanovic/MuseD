@@ -8,10 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.MediaItem
-import com.example.mused.features.folders.loadSongDataFromFolders
-import com.example.mused.features.library.clearSongCache
-import com.example.mused.features.library.loadSongCache
-import com.example.mused.features.library.saveSongCache
+import com.example.mused.features.library.MusicRepository
+import com.example.mused.features.library.MusicRepositoryImpl
 import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.buildMediaItems
 import com.example.mused.models.PlaybackUiState
@@ -30,15 +28,15 @@ class HomeViewModel(
             Context.MODE_PRIVATE
         )
 
+    private val musicRepository: MusicRepository =
+        MusicRepositoryImpl(appContext)
+
     var selectedFolderUris: List<String> =
-        prefs.getStringSet(
-            SELECTED_FOLDER_URIS_KEY,
-            emptySet()
-        )?.toList() ?: emptyList()
+        musicRepository.loadSelectedFolderUris()
         private set
 
     var songs: List<SongData> =
-        loadSongCache(appContext)
+        musicRepository.loadCachedSongs()
         private set
 
     var mediaItems: List<MediaItem> = emptyList()
@@ -100,10 +98,7 @@ class HomeViewModel(
 
     fun loadSongsFromSelectedFolders(): List<SongData> {
         val loadedSongs =
-            loadSongDataFromFolders(
-                context = appContext,
-                folderUriStrings = selectedFolderUris
-            )
+            musicRepository.loadSongsFromFolders(selectedFolderUris)
 
         songs = loadedSongs
 
@@ -112,10 +107,7 @@ class HomeViewModel(
             loadedSongs
         )
 
-        saveSongCache(
-            appContext,
-            loadedSongs
-        )
+        musicRepository.saveSongCache(loadedSongs)
 
         return loadedSongs
     }
@@ -124,7 +116,7 @@ class HomeViewModel(
         selectedFolderUris =
             (selectedFolderUris + folderUri).distinct()
 
-        saveSelectedFolders()
+        musicRepository.saveSelectedFolderUris(selectedFolderUris)
 
         return loadSongsFromSelectedFolders()
     }
@@ -135,7 +127,7 @@ class HomeViewModel(
                 it != folderUri
             }
 
-        saveSelectedFolders()
+        musicRepository.saveSelectedFolderUris(selectedFolderUris)
 
         return loadSongsFromSelectedFolders()
     }
@@ -145,12 +137,9 @@ class HomeViewModel(
         songs = emptyList()
         mediaItems = emptyList()
 
-        clearSongCache(appContext)
+        musicRepository.clearSongCache()
+        musicRepository.clearSelectedFolderUris()
         clearPlaybackState()
-
-        prefs.edit {
-            remove(SELECTED_FOLDER_URIS_KEY)
-        }
 
         return songs
     }
@@ -328,18 +317,9 @@ class HomeViewModel(
         }
     }
 
-    private fun saveSelectedFolders() {
-        prefs.edit {
-            putStringSet(
-                SELECTED_FOLDER_URIS_KEY,
-                selectedFolderUris.toSet()
-            )
-        }
-    }
 
     companion object {
         private const val PREFS_NAME = "mused_prefs"
-        private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
         private const val SORT_MODE_KEY = "sort_mode"
         private const val DEFAULT_SORT_MODE = "Name A-Z"
         private const val DYNAMIC_THEME_KEY = "dynamic_theme"
