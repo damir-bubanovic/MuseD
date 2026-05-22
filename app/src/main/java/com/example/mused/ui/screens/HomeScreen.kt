@@ -12,7 +12,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -157,15 +156,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             songUri = currentFileUri,
             position = currentPosition,
             shuffleEnabled = isShuffleEnabled,
-            repeatMode = selectedRepeatMode
+            repeatMode = selectedRepeatMode,
+            songIndex = currentIndex
         )
-
-        context.getSharedPreferences(
-            "mused_prefs",
-            Context.MODE_PRIVATE
-        ).edit {
-            putInt("current_song_index", currentIndex)
-        }
     }
 
     val playbackController = remember(
@@ -327,27 +320,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
         showPlayerScreen = false
 
-        homeViewModel.setCurrentSong(
-            songName = null,
-            songUri = null,
-            songIndex = null
-        )
-
-        homeViewModel.setIsPlaying(false)
-
-        homeViewModel.setPlaybackPosition(
-            position = 0,
-            duration = 0
-        )
-
-        context.getSharedPreferences(
-            "mused_prefs",
-            Context.MODE_PRIVATE
-        ).edit {
-            remove("current_song_uri")
-            remove("current_song_index")
-            remove("current_position_ms")
-        }
+        homeViewModel.clearPlaybackState()
     }
 
     fun clearFolders() {
@@ -366,27 +339,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         showPlayerScreen = false
         sleepTimerRemainingSeconds = null
 
-        homeViewModel.setCurrentSong(
-            songName = null,
-            songUri = null,
-            songIndex = null
-        )
-
-        homeViewModel.setIsPlaying(false)
-
-        homeViewModel.setPlaybackPosition(
-            position = 0,
-            duration = 0
-        )
-
-        context.getSharedPreferences(
-            "mused_prefs",
-            Context.MODE_PRIVATE
-        ).edit {
-            remove("current_song_uri")
-            remove("current_song_index")
-            remove("current_position_ms")
-        }
+        homeViewModel.clearPlaybackState()
     }
 
     LaunchedEffect(sleepTimerRemainingSeconds) {
