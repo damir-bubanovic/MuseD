@@ -8,8 +8,11 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.MediaItem
-import com.example.mused.features.library.MusicRepository
-import com.example.mused.features.library.MusicRepositoryImpl
+import com.example.mused.features.folders.loadSongDataFromFolders
+import com.example.mused.features.library.clearSongCache
+import com.example.mused.features.library.loadSongCache
+import com.example.mused.features.library.saveSongCache
+import com.example.mused.features.player.EqualizerPreset
 import com.example.mused.features.player.buildMediaItems
 import com.example.mused.models.PlaybackUiState
 import com.example.mused.models.SongData
@@ -27,15 +30,15 @@ class HomeViewModel(
             Context.MODE_PRIVATE
         )
 
-    private val musicRepository: MusicRepository =
-        MusicRepositoryImpl(appContext)
-
     var selectedFolderUris: List<String> =
-        musicRepository.loadSelectedFolderUris()
+        prefs.getStringSet(
+            SELECTED_FOLDER_URIS_KEY,
+            emptySet()
+        )?.toList() ?: emptyList()
         private set
 
     var songs: List<SongData> =
-        musicRepository.loadCachedSongs()
+        loadSongCache(appContext)
         private set
 
     var mediaItems: List<MediaItem> = emptyList()
@@ -44,6 +47,27 @@ class HomeViewModel(
     var searchQuery: String = ""
         private set
 
+    var sortMode: String =
+        prefs.getString(
+            SORT_MODE_KEY,
+            DEFAULT_SORT_MODE
+        ) ?: DEFAULT_SORT_MODE
+        private set
+
+    var dynamicThemeEnabled: Boolean =
+        prefs.getBoolean(DYNAMIC_THEME_KEY, false)
+        private set
+
+    var equalizerEnabled: Boolean =
+        prefs.getBoolean(EQUALIZER_ENABLED_KEY, true)
+        private set
+
+    var selectedEqualizerPreset: String =
+        prefs.getString(
+            EQUALIZER_PRESET_KEY,
+            EqualizerPreset.FLAT.name
+        ) ?: EqualizerPreset.FLAT.name
+        private set
 
     var savedSongUri: String? =
         prefs.getString(CURRENT_SONG_URI_KEY, null)
@@ -76,7 +100,10 @@ class HomeViewModel(
 
     fun loadSongsFromSelectedFolders(): List<SongData> {
         val loadedSongs =
-            musicRepository.loadSongsFromFolders(selectedFolderUris)
+            loadSongDataFromFolders(
+                context = appContext,
+                folderUriStrings = selectedFolderUris
+            )
 
         songs = loadedSongs
 
@@ -85,7 +112,10 @@ class HomeViewModel(
             loadedSongs
         )
 
-        musicRepository.saveSongCache(loadedSongs)
+        saveSongCache(
+            appContext,
+            loadedSongs
+        )
 
         return loadedSongs
     }
@@ -94,7 +124,7 @@ class HomeViewModel(
         selectedFolderUris =
             (selectedFolderUris + folderUri).distinct()
 
-        musicRepository.saveSelectedFolderUris(selectedFolderUris)
+        saveSelectedFolders()
 
         return loadSongsFromSelectedFolders()
     }
@@ -105,7 +135,7 @@ class HomeViewModel(
                 it != folderUri
             }
 
-        musicRepository.saveSelectedFolderUris(selectedFolderUris)
+        saveSelectedFolders()
 
         return loadSongsFromSelectedFolders()
     }
@@ -115,9 +145,11 @@ class HomeViewModel(
         songs = emptyList()
         mediaItems = emptyList()
 
-        musicRepository.clearSongCache()
-        musicRepository.clearSelectedFolderUris()
-        clearPlaybackState()
+        clearSongCache(appContext)
+
+        prefs.edit {
+            remove(SELECTED_FOLDER_URIS_KEY)
+        }
 
         return songs
     }
@@ -127,6 +159,62 @@ class HomeViewModel(
         return searchQuery
     }
 
+    fun updateSortMode(newSortMode: String): String {
+        sortMode = newSortMode
+
+        prefs.edit {
+            putString(SORT_MODE_KEY, newSortMode)
+        }
+
+        return sortMode
+    }
+
+    fun updateDynamicTheme(enabled: Boolean): Boolean {
+        dynamicThemeEnabled = enabled
+
+        prefs.edit {
+            putBoolean(DYNAMIC_THEME_KEY, enabled)
+        }
+
+        return dynamicThemeEnabled
+    }
+
+    fun updateEqualizerEnabled(enabled: Boolean): Boolean {
+        equalizerEnabled = enabled
+
+        prefs.edit {
+            putBoolean(EQUALIZER_ENABLED_KEY, enabled)
+        }
+
+        return equalizerEnabled
+    }
+
+    fun updateEqualizerPreset(presetLabel: String): String {
+        selectedEqualizerPreset =
+            when (presetLabel) {
+                "Bass Boost" -> EqualizerPreset.BASS_BOOST.name
+                "Vocal" -> EqualizerPreset.VOCAL.name
+                "Rock" -> EqualizerPreset.ROCK.name
+                "Classical" -> EqualizerPreset.CLASSICAL.name
+                else -> EqualizerPreset.FLAT.name
+            }
+
+        prefs.edit {
+            putString(EQUALIZER_PRESET_KEY, selectedEqualizerPreset)
+        }
+
+        return selectedEqualizerPreset
+    }
+
+    fun selectedEqualizerPresetLabel(): String {
+        return when (selectedEqualizerPreset) {
+            EqualizerPreset.BASS_BOOST.name -> "Bass Boost"
+            EqualizerPreset.VOCAL.name -> "Vocal"
+            EqualizerPreset.ROCK.name -> "Rock"
+            EqualizerPreset.CLASSICAL.name -> "Classical"
+            else -> "Flat"
+        }
+    }
 
     fun savePlaybackState(
         songUri: String?,
@@ -228,7 +316,7 @@ class HomeViewModel(
         }
     }
 
-    fun sortedSongs(sortMode: String): List<SongData> {
+    fun sortedSongs(): List<SongData> {
         val filteredSongs = filteredSongs()
 
         return when (sortMode) {
@@ -239,9 +327,23 @@ class HomeViewModel(
         }
     }
 
+    private fun saveSelectedFolders() {
+        prefs.edit {
+            putStringSet(
+                SELECTED_FOLDER_URIS_KEY,
+                selectedFolderUris.toSet()
+            )
+        }
+    }
 
     companion object {
         private const val PREFS_NAME = "mused_prefs"
+        private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
+        private const val SORT_MODE_KEY = "sort_mode"
+        private const val DEFAULT_SORT_MODE = "Name A-Z"
+        private const val DYNAMIC_THEME_KEY = "dynamic_theme"
+        private const val EQUALIZER_ENABLED_KEY = "equalizer_enabled"
+        private const val EQUALIZER_PRESET_KEY = "equalizer_preset"
         private const val CURRENT_SONG_URI_KEY = "current_song_uri"
         private const val CURRENT_SONG_INDEX_KEY = "current_song_index"
         private const val CURRENT_POSITION_KEY = "current_position_ms"

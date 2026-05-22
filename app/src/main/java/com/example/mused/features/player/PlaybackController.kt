@@ -11,6 +11,7 @@ class PlaybackController(
     private val mediaItemsProvider: () -> List<MediaItem>,
     private val shuffleEnabledProvider: () -> Boolean,
     private val repeatModeProvider: () -> Int,
+    private val currentSongIndexProvider: () -> Int?,
     private val onSongStarted: (
         song: SongData,
         index: Int,
@@ -24,7 +25,6 @@ class PlaybackController(
     private val onPendingSeekChanged: (Int?) -> Unit,
     private val onShuffleChanged: (Boolean) -> Unit,
     private val onRepeatModeChanged: (Int) -> Unit,
-    private val onIsPlayingChanged: (Boolean) -> Unit,
     private val savePlaybackState: () -> Unit
 ) {
 
@@ -65,22 +65,19 @@ class PlaybackController(
     }
 
     fun playPrevious() {
-        val controller = mediaControllerProvider() ?: return
+        val currentIndex = currentSongIndexProvider() ?: return
 
-        if (controller.hasPreviousMediaItem()) {
-            controller.seekToPreviousMediaItem()
-            controller.play()
-        } else {
-            controller.seekTo(0)
+        if (currentIndex > 0) {
+            playSong(currentIndex - 1)
         }
     }
 
     fun playNext() {
-        val controller = mediaControllerProvider() ?: return
+        val songs = songsProvider()
+        val currentIndex = currentSongIndexProvider() ?: return
 
-        if (controller.hasNextMediaItem()) {
-            controller.seekToNextMediaItem()
-            controller.play()
+        if (currentIndex < songs.size - 1) {
+            playSong(currentIndex + 1)
         }
     }
 
@@ -165,33 +162,6 @@ class PlaybackController(
         onRepeatModeChanged(newRepeatMode)
 
         savePlaybackState()
-    }
-
-    fun handleMediaItemTransition(
-        index: Int,
-        fallbackDuration: Int
-    ) {
-        val song =
-            songsProvider().getOrNull(index) ?: return
-
-        val playbackDuration =
-            song.durationMs
-                .toInt()
-                .takeIf { duration -> duration > 0 }
-                ?: fallbackDuration
-
-        onPendingSeekChanged(null)
-
-        onSongStarted(
-            song,
-            index,
-            0,
-            playbackDuration
-        )
-    }
-
-    fun handleIsPlayingChanged(isPlaying: Boolean) {
-        onIsPlayingChanged(isPlaying)
     }
 
     companion object {
