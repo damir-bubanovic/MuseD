@@ -21,6 +21,7 @@ import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.PlaybackController
+import com.example.mused.models.SongData
 import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -309,37 +310,41 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    fun clearPlaybackState() {
-        mediaController?.pause()
-
+    fun resetLocalPlaybackUiState(
+        closePlayerScreen: Boolean = true,
+        clearSleepTimer: Boolean = false
+    ) {
         savedSongUri = null
         savedPosition = 0
         playbackPosition = 0
         playbackDuration = 0
         pendingSeekPosition = null
 
-        showPlayerScreen = false
+        if (closePlayerScreen) {
+            showPlayerScreen = false
+        }
 
+        if (clearSleepTimer) {
+            sleepTimerRemainingSeconds = null
+        }
+    }
+
+    fun refreshLibraryStateAfterFolderChange(updatedSongs: List<SongData>) {
+        songs = updatedSongs
+        selectedFolderUris = homeViewModel.selectedFolderUris
+        hasAutoResumed = false
+    }
+
+    fun clearPlaybackState() {
+        mediaController?.pause()
+        resetLocalPlaybackUiState()
         homeViewModel.clearPlaybackState()
     }
 
     fun clearFolders() {
         mediaController?.pause()
-
-        songs = homeViewModel.clearFolders()
-        selectedFolderUris = homeViewModel.selectedFolderUris
-
-        savedSongUri = null
-        savedPosition = 0
-        playbackPosition = 0
-        playbackDuration = 0
-        pendingSeekPosition = null
-
-        hasAutoResumed = false
-        showPlayerScreen = false
-        sleepTimerRemainingSeconds = null
-
-        homeViewModel.clearPlaybackState()
+        refreshLibraryStateAfterFolderChange(homeViewModel.clearFolders())
+        resetLocalPlaybackUiState(clearSleepTimer = true)
     }
 
     LaunchedEffect(sleepTimerRemainingSeconds) {
@@ -410,9 +415,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 return@rememberFolderPickerLauncher
             }
 
-            songs = homeViewModel.addFolder(folderUri)
-            selectedFolderUris = homeViewModel.selectedFolderUris
-            hasAutoResumed = false
+            refreshLibraryStateAfterFolderChange(
+                homeViewModel.addFolder(folderUri)
+            )
         }
 
     AnimatedContent(
@@ -542,9 +547,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         openFolderPicker()
                     },
                     onRemoveFolder = { folderUriToRemove ->
-                        songs = homeViewModel.removeFolder(folderUriToRemove)
-                        selectedFolderUris = homeViewModel.selectedFolderUris
-                        hasAutoResumed = false
+                        refreshLibraryStateAfterFolderChange(
+                            homeViewModel.removeFolder(folderUriToRemove)
+                        )
                     },
                     onPlaySong = { index ->
                         playbackController.playSong(index)

@@ -146,6 +146,7 @@ class HomeViewModel(
         mediaItems = emptyList()
 
         clearSongCache(appContext)
+        clearPlaybackState()
 
         prefs.edit {
             remove(SELECTED_FOLDER_URIS_KEY)
