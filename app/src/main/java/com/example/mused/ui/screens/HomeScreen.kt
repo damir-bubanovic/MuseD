@@ -22,6 +22,7 @@ import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
 import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.PlaybackController
+import com.example.mused.features.player.rememberPlaybackRuntimeState
 import com.example.mused.viewmodels.HomeViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
@@ -47,8 +48,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
-    var playbackPosition by remember { mutableIntStateOf(0) }
-    var playbackDuration by remember { mutableIntStateOf(0) }
+    val playbackRuntimeState = rememberPlaybackRuntimeState(
+        savedSongUri = homeViewModel.savedSongUri,
+        savedPosition = homeViewModel.savedPosition
+    )
 
     var isShuffleEnabled by remember {
         mutableStateOf(homeViewModel.shuffleEnabled)
@@ -57,8 +60,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var selectedRepeatMode by remember {
         mutableIntStateOf(homeViewModel.repeatMode)
     }
-
-    var pendingSeekPosition by remember { mutableStateOf<Int?>(null) }
 
     var dynamicThemeEnabled by remember {
         mutableStateOf(homeViewModel.dynamicThemeEnabled)
@@ -77,16 +78,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var sortMode by remember {
         mutableStateOf(homeViewModel.sortMode)
     }
-
-    var savedSongUri by remember {
-        mutableStateOf(homeViewModel.savedSongUri)
-    }
-
-    var savedPosition by remember {
-        mutableIntStateOf(homeViewModel.savedPosition)
-    }
-
-    var hasAutoResumed by remember { mutableStateOf(false) }
 
     fun currentSongFallbackDuration(): Int {
         val currentIndex =
@@ -155,15 +146,15 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     val currentSong = songs.getOrNull(index)
 
                     if (currentSong != null) {
-                        savedSongUri = currentSong.uri
-                        playbackPosition = 0
-                        playbackDuration =
+                        playbackRuntimeState.savedSongUri = currentSong.uri
+                        playbackRuntimeState.playbackPosition = 0
+                        playbackRuntimeState.playbackDuration =
                             currentSong.durationMs
                                 .toInt()
                                 .takeIf { duration -> duration > 0 }
                                 ?: currentPlaybackDuration()
 
-                        pendingSeekPosition = null
+                        playbackRuntimeState.pendingSeekPosition = null
 
                         homeViewModel.setCurrentSong(
                             songName = currentSong.title,
@@ -173,7 +164,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
                         homeViewModel.setPlaybackPosition(
                             position = 0,
-                            duration = playbackDuration
+                            duration = playbackRuntimeState.playbackDuration
                         )
                     }
                 }
@@ -199,10 +190,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             songs.getOrNull(currentIndex)?.uri ?: return
 
         val currentPosition =
-            mediaController?.currentPosition?.toInt() ?: playbackPosition
+            mediaController?.currentPosition?.toInt() ?: playbackRuntimeState.playbackPosition
 
-        savedSongUri = currentFileUri
-        savedPosition = currentPosition
+        playbackRuntimeState.savedSongUri = currentFileUri
+        playbackRuntimeState.savedPosition = currentPosition
 
         homeViewModel.savePlaybackState(
             songUri = currentFileUri,
@@ -223,17 +214,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         while (playbackUiState.isPlaying) {
             val controller = mediaController ?: break
 
-            playbackPosition =
+            playbackRuntimeState.playbackPosition =
                 controller.currentPosition
                     .toInt()
                     .coerceAtLeast(0)
 
-            playbackDuration =
+            playbackRuntimeState.playbackDuration =
                 currentPlaybackDuration()
 
             homeViewModel.setPlaybackPosition(
-                position = playbackPosition,
-                duration = playbackDuration
+                position = playbackRuntimeState.playbackPosition,
+                duration = playbackRuntimeState.playbackDuration
             )
 
             savePlaybackState()
@@ -268,11 +259,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     fun clearPlaybackState() {
         mediaController?.pause()
 
-        savedSongUri = null
-        savedPosition = 0
-        playbackPosition = 0
-        playbackDuration = 0
-        pendingSeekPosition = null
+        playbackRuntimeState.savedSongUri = null
+        playbackRuntimeState.savedPosition = 0
+        playbackRuntimeState.playbackPosition = 0
+        playbackRuntimeState.playbackDuration = 0
+        playbackRuntimeState.pendingSeekPosition = null
 
         showPlayerScreen = false
 
@@ -305,13 +296,13 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         songs = homeViewModel.clearFolders()
         selectedFolderUris = homeViewModel.selectedFolderUris
 
-        savedSongUri = null
-        savedPosition = 0
-        playbackPosition = 0
-        playbackDuration = 0
-        pendingSeekPosition = null
+        playbackRuntimeState.savedSongUri = null
+        playbackRuntimeState.savedPosition = 0
+        playbackRuntimeState.playbackPosition = 0
+        playbackRuntimeState.playbackDuration = 0
+        playbackRuntimeState.pendingSeekPosition = null
 
-        hasAutoResumed = false
+        playbackRuntimeState.hasAutoResumed = false
         showPlayerScreen = false
         sleepTimerRemainingSeconds = null
 
@@ -345,9 +336,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         isShuffleEnabled,
         selectedRepeatMode,
         playbackUiState.currentSongIndex,
-        playbackPosition,
-        playbackDuration,
-        savedSongUri
+        playbackRuntimeState.playbackPosition,
+        playbackRuntimeState.playbackDuration,
+        playbackRuntimeState.savedSongUri
     ) {
         PlaybackController(
             mediaControllerProvider = {
@@ -369,9 +360,9 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 homeViewModel.playbackUiState.currentSongIndex
             },
             onSongStarted = { song, index, position, duration ->
-                savedSongUri = song.uri
-                playbackPosition = position
-                playbackDuration = duration
+                playbackRuntimeState.savedSongUri = song.uri
+                playbackRuntimeState.playbackPosition = position
+                playbackRuntimeState.playbackDuration = duration
 
                 homeViewModel.setCurrentSong(
                     songName = song.title,
@@ -385,8 +376,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             },
             onPlaybackPositionChanged = { position, duration ->
-                playbackPosition = position
-                playbackDuration = duration
+                playbackRuntimeState.playbackPosition = position
+                playbackRuntimeState.playbackDuration = duration
 
                 homeViewModel.setPlaybackPosition(
                     position = position,
@@ -394,7 +385,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 )
             },
             onPendingSeekChanged = { pendingPosition ->
-                pendingSeekPosition = pendingPosition
+                playbackRuntimeState.pendingSeekPosition = pendingPosition
             },
             onShuffleChanged = { enabled ->
                 isShuffleEnabled = enabled
@@ -424,30 +415,30 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             remainingSeconds - 1
     }
 
-    LaunchedEffect(songs, savedSongUri, mediaController) {
-        if (hasAutoResumed) return@LaunchedEffect
+    LaunchedEffect(songs, playbackRuntimeState.savedSongUri, mediaController) {
+        if (playbackRuntimeState.hasAutoResumed) return@LaunchedEffect
         if (songs.isEmpty()) return@LaunchedEffect
-        if (savedSongUri == null) return@LaunchedEffect
-        if (savedPosition <= 0) return@LaunchedEffect
+        if (playbackRuntimeState.savedSongUri == null) return@LaunchedEffect
+        if (playbackRuntimeState.savedPosition <= 0) return@LaunchedEffect
         if (mediaController == null) return@LaunchedEffect
 
         val savedIndex =
             songs.indexOfFirst { song ->
-                song.uri == savedSongUri
+                song.uri == playbackRuntimeState.savedSongUri
             }
 
         if (savedIndex != -1) {
-            val positionToResume = savedPosition
+            val positionToResume = playbackRuntimeState.savedPosition
 
-            hasAutoResumed = true
+            playbackRuntimeState.hasAutoResumed = true
 
             val song = songs[savedIndex]
 
-            playbackDuration =
+            playbackRuntimeState.playbackDuration =
                 song.durationMs
                     .toInt()
                     .takeIf { duration -> duration > 0 }
-                    ?: playbackDuration
+                    ?: playbackRuntimeState.playbackDuration
 
             homeViewModel.setCurrentSong(
                 songName = song.title,
@@ -459,11 +450,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             mediaController?.seekTo(positionToResume.toLong())
 
-            playbackPosition = positionToResume
+            playbackRuntimeState.playbackPosition = positionToResume
 
             homeViewModel.setPlaybackPosition(
                 position = positionToResume,
-                duration = playbackDuration
+                duration = playbackRuntimeState.playbackDuration
             )
 
             showPlayerScreen = false
@@ -478,7 +469,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             songs = homeViewModel.addFolder(folderUri)
             selectedFolderUris = homeViewModel.selectedFolderUris
-            hasAutoResumed = false
+            playbackRuntimeState.hasAutoResumed = false
         }
 
     AnimatedContent(
@@ -529,8 +520,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     songUri = playbackUiState.currentSongUri,
                     isPlaying = playbackUiState.isPlaying,
                     playbackPosition =
-                        pendingSeekPosition ?: playbackPosition,
-                    playbackDuration = playbackDuration,
+                        playbackRuntimeState.pendingSeekPosition ?: playbackRuntimeState.playbackPosition,
+                    playbackDuration = playbackRuntimeState.playbackDuration,
                     isShuffleEnabled = isShuffleEnabled,
                     selectedRepeatMode = selectedRepeatMode,
                     queueSongs = songs.map { song ->
@@ -543,18 +534,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                         showPlayerScreen = false
                     },
                     onSeekChange = { newPosition ->
-                        playbackPosition =
+                        playbackRuntimeState.playbackPosition =
                             playbackController.seekTo(
                                 newPosition = newPosition,
-                                playbackDuration = playbackDuration
+                                playbackDuration = playbackRuntimeState.playbackDuration
                             )
                     },
                     onSeekFinished = {
-                        playbackPosition =
+                        playbackRuntimeState.playbackPosition =
                             playbackController.finishSeek(
-                                pendingSeekPosition = pendingSeekPosition,
-                                playbackPosition = playbackPosition,
-                                playbackDuration = playbackDuration
+                                pendingSeekPosition = playbackRuntimeState.pendingSeekPosition,
+                                playbackPosition = playbackRuntimeState.playbackPosition,
+                                playbackDuration = playbackRuntimeState.playbackDuration
                             )
                     },
                     onPrevious = {
@@ -610,7 +601,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     onRemoveFolder = { folderUriToRemove ->
                         songs = homeViewModel.removeFolder(folderUriToRemove)
                         selectedFolderUris = homeViewModel.selectedFolderUris
-                        hasAutoResumed = false
+                        playbackRuntimeState.hasAutoResumed = false
                     },
                     onPlaySong = { index ->
                         playbackController.playSong(index)
