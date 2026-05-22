@@ -77,6 +77,11 @@ class HomeViewModel(
         prefs.getInt(CURRENT_POSITION_KEY, 0)
         private set
 
+    var savedSongIndex: Int? =
+        prefs.getInt(CURRENT_SONG_INDEX_KEY, -1)
+            .takeIf { index -> index >= 0 }
+        private set
+
     var shuffleEnabled: Boolean =
         prefs.getBoolean(SHUFFLE_ENABLED_KEY, false)
         private set
@@ -215,9 +220,11 @@ class HomeViewModel(
         songUri: String?,
         position: Int,
         shuffleEnabled: Boolean,
-        repeatMode: Int
+        repeatMode: Int,
+        songIndex: Int? = playbackUiState.currentSongIndex
     ) {
         savedSongUri = songUri
+        savedSongIndex = songIndex
         savedPosition = position
         this.shuffleEnabled = shuffleEnabled
         this.repeatMode = repeatMode
@@ -230,10 +237,43 @@ class HomeViewModel(
             )
 
         prefs.edit {
-            putString(CURRENT_SONG_URI_KEY, songUri)
+            if (songUri == null) {
+                remove(CURRENT_SONG_URI_KEY)
+            } else {
+                putString(CURRENT_SONG_URI_KEY, songUri)
+            }
+
+            if (songIndex == null) {
+                remove(CURRENT_SONG_INDEX_KEY)
+            } else {
+                putInt(CURRENT_SONG_INDEX_KEY, songIndex)
+            }
+
             putInt(CURRENT_POSITION_KEY, position)
             putBoolean(SHUFFLE_ENABLED_KEY, shuffleEnabled)
             putInt(REPEAT_MODE_KEY, repeatMode)
+        }
+    }
+
+    fun clearPlaybackState() {
+        savedSongUri = null
+        savedSongIndex = null
+        savedPosition = 0
+
+        playbackUiState =
+            playbackUiState.copy(
+                currentSongName = null,
+                currentSongUri = null,
+                currentSongIndex = null,
+                isPlaying = false,
+                playbackPosition = 0,
+                playbackDuration = 0
+            )
+
+        prefs.edit {
+            remove(CURRENT_SONG_URI_KEY)
+            remove(CURRENT_SONG_INDEX_KEY)
+            remove(CURRENT_POSITION_KEY)
         }
     }
 
@@ -305,6 +345,7 @@ class HomeViewModel(
         private const val EQUALIZER_ENABLED_KEY = "equalizer_enabled"
         private const val EQUALIZER_PRESET_KEY = "equalizer_preset"
         private const val CURRENT_SONG_URI_KEY = "current_song_uri"
+        private const val CURRENT_SONG_INDEX_KEY = "current_song_index"
         private const val CURRENT_POSITION_KEY = "current_position_ms"
         private const val SHUFFLE_ENABLED_KEY = "shuffle_enabled"
         private const val REPEAT_MODE_KEY = "repeat_mode"
