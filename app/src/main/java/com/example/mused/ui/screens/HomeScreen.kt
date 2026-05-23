@@ -209,26 +209,29 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(mediaController, playbackUiState.isPlaying) {
-        while (playbackUiState.isPlaying) {
-            val controller = mediaController ?: break
+    DisposableEffect(mediaController, playbackUiState.isPlaying) {
+        val controller = mediaController
 
-            playbackStateViewModel.playbackPosition =
-                controller.currentPosition
-                    .toInt()
-                    .coerceAtLeast(0)
-
-            playbackStateViewModel.playbackDuration =
-                currentPlaybackDuration()
-
-            homeViewModel.setPlaybackPosition(
-                position = playbackStateViewModel.playbackPosition,
-                duration = playbackStateViewModel.playbackDuration
+        if (controller != null && playbackUiState.isPlaying) {
+            playbackStateViewModel.startProgressTracking(
+                controller = controller,
+                durationProvider = {
+                    currentPlaybackDuration()
+                },
+                onProgressChanged = { position, duration ->
+                    homeViewModel.setPlaybackPosition(
+                        position = position,
+                        duration = duration
+                    )
+                },
+                savePlaybackState = {
+                    savePlaybackState()
+                }
             )
+        }
 
-            savePlaybackState()
-
-            delay(1000)
+        onDispose {
+            playbackStateViewModel.stopProgressTracking()
         }
     }
 
