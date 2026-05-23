@@ -1,7 +1,6 @@
 package com.example.mused.ui.screens
 
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -18,13 +17,11 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import com.example.mused.features.folders.rememberFolderPickerLauncher
-import com.example.mused.features.player.MusicService
 import com.example.mused.features.player.PlaybackController
+import com.example.mused.features.player.MediaControllerManager
 import com.example.mused.viewmodels.PlaybackStateViewModel
 import com.example.mused.viewmodels.HomeViewModel
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 
 @Suppress("AssignedValueIsNeverRead")
@@ -47,6 +44,10 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
+
+    val mediaControllerManager = remember(context) {
+        MediaControllerManager(context)
+    }
 
     val playbackStateViewModel: PlaybackStateViewModel = viewModel()
 
@@ -114,25 +115,19 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        val sessionToken = SessionToken(
-            context,
-            ComponentName(context, MusicService::class.java)
-        )
+    DisposableEffect(mediaControllerManager) {
+        mediaControllerManager.connect { controller ->
+            mediaController = controller
+            mediaControllerManager.applyPlaybackModes(
+                shuffleEnabled = isShuffleEnabled,
+                repeatMode = selectedRepeatMode
+            )
+        }
 
-        val controllerFuture =
-            MediaController.Builder(context, sessionToken).buildAsync()
-
-        controllerFuture.addListener(
-            {
-                mediaController = controllerFuture.get()
-
-                mediaController?.shuffleModeEnabled = isShuffleEnabled
-                mediaController?.repeatMode =
-                    PlaybackController.toMedia3RepeatMode(selectedRepeatMode)
-            },
-            MoreExecutors.directExecutor()
-        )
+        onDispose {
+            mediaControllerManager.release()
+            mediaController = null
+        }
     }
 
     DisposableEffect(mediaController, songs) {
