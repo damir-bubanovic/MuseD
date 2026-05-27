@@ -115,8 +115,12 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         if (selectedFolderUris.isNotEmpty()) {
-            songs = libraryViewModel.loadSongsFromSelectedFolders()
+            songs = libraryViewModel.loadSongsFromSelectedFolders(sortMode)
         }
+    }
+
+    LaunchedEffect(sortMode, searchQuery, songs) {
+        libraryViewModel.refreshVisibleSongs(sortMode)
     }
 
     DisposableEffect(mediaControllerManager) {
@@ -425,7 +429,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 return@rememberFolderPickerLauncher
             }
 
-            songs = libraryViewModel.addFolder(folderUri)
+            songs = libraryViewModel.addFolder(folderUri, sortMode)
             selectedFolderUris = libraryViewModel.selectedFolderUris
             playbackStateViewModel.hasAutoResumed = false
         }
@@ -536,7 +540,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     modifier = modifier,
                     selectedFolderUris = selectedFolderUris,
                     songs = songs,
-                    sortedSongs = libraryViewModel.sortedSongs(sortMode),
+                    sortedSongs = libraryViewModel.visibleSongs,
+
                     currentSongIndex = playbackUiState.currentSongIndex,
                     currentSongName = playbackUiState.currentSongName,
                     currentSongUri = playbackUiState.currentSongUri,
@@ -547,17 +552,19 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     sortMode = sortMode,
                     onSearchChange = { newSearchQuery ->
                         searchQuery =
-                            libraryViewModel.updateSearchQuery(newSearchQuery)
+                            libraryViewModel.updateSearchQuery(newSearchQuery, sortMode)
                     },
                     onSortModeChange = { newSortMode ->
                         sortMode =
                             settingsViewModel.updateSortMode(newSortMode)
+
+                        libraryViewModel.refreshVisibleSongs(sortMode)
                     },
                     onPickFolder = {
                         openFolderPicker()
                     },
                     onRemoveFolder = { folderUriToRemove ->
-                        songs = libraryViewModel.removeFolder(folderUriToRemove)
+                        songs = libraryViewModel.removeFolder(folderUriToRemove, sortMode)
                         selectedFolderUris = libraryViewModel.selectedFolderUris
                         playbackStateViewModel.hasAutoResumed = false
                     },
