@@ -1,40 +1,25 @@
 package com.example.mused.features.library
 
 import android.content.Context
-import androidx.core.content.edit
 import com.example.mused.features.folders.loadSongDataFromFolders
+import com.example.mused.features.preferences.AppPreferences
 import com.example.mused.models.SongData
 
 class MusicRepositoryImpl(
-    private val context: Context
+    private val context: Context,
+    private val appPreferences: AppPreferences = AppPreferences(context)
 ) : MusicRepository {
 
-    private val prefs =
-        context.getSharedPreferences(
-            PREFS_NAME,
-            Context.MODE_PRIVATE
-        )
-
     override fun loadSelectedFolderUris(): List<String> {
-        return prefs.getStringSet(
-            SELECTED_FOLDER_URIS_KEY,
-            emptySet()
-        )?.toList() ?: emptyList()
+        return appPreferences.loadSelectedFolderUris()
     }
 
     override fun saveSelectedFolderUris(folderUris: List<String>) {
-        prefs.edit {
-            putStringSet(
-                SELECTED_FOLDER_URIS_KEY,
-                folderUris.toSet()
-            )
-        }
+        appPreferences.saveSelectedFolderUris(folderUris)
     }
 
     override fun clearSelectedFolderUris() {
-        prefs.edit {
-            remove(SELECTED_FOLDER_URIS_KEY)
-        }
+        appPreferences.clearSelectedFolderUris()
     }
 
     override fun loadCachedSongs(): List<SongData> {
@@ -57,10 +42,5 @@ class MusicRepositoryImpl(
 
     override fun clearSongCache() {
         clearSongCache(context)
-    }
-
-    private companion object {
-        private const val PREFS_NAME = "mused_prefs"
-        private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
     }
 }

@@ -18,10 +18,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.example.mused.features.folders.rememberFolderPickerLauncher
-import com.example.mused.features.player.PlaybackController
 import com.example.mused.features.player.MediaControllerManager
-import com.example.mused.viewmodels.PlaybackStateViewModel
+import com.example.mused.features.player.PlaybackController
 import com.example.mused.viewmodels.HomeViewModel
+import com.example.mused.viewmodels.LibraryViewModel
+import com.example.mused.viewmodels.PlaybackStateViewModel
+import com.example.mused.viewmodels.SettingsViewModel
 import kotlinx.coroutines.delay
 
 @Suppress("AssignedValueIsNeverRead")
@@ -30,17 +32,21 @@ import kotlinx.coroutines.delay
 fun HomeScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val homeViewModel: HomeViewModel = viewModel()
+    val libraryViewModel: LibraryViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
+    val playbackStateViewModel: PlaybackStateViewModel = viewModel()
+
     val playbackUiState = homeViewModel.playbackUiState
 
     var showPlayerScreen by remember { mutableStateOf(false) }
     var showSettingsScreen by remember { mutableStateOf(false) }
 
     var selectedFolderUris by remember {
-        mutableStateOf(homeViewModel.selectedFolderUris)
+        mutableStateOf(libraryViewModel.selectedFolderUris)
     }
 
     var songs by remember {
-        mutableStateOf(homeViewModel.songs)
+        mutableStateOf(libraryViewModel.songs)
     }
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
@@ -48,8 +54,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     val mediaControllerManager = remember(context) {
         MediaControllerManager(context)
     }
-
-    val playbackStateViewModel: PlaybackStateViewModel = viewModel()
 
     LaunchedEffect(Unit) {
         playbackStateViewModel.initialize(
@@ -67,21 +71,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 
     var dynamicThemeEnabled by remember {
-        mutableStateOf(homeViewModel.dynamicThemeEnabled)
+        mutableStateOf(settingsViewModel.dynamicThemeEnabled)
     }
 
     var equalizerEnabled by remember {
-        mutableStateOf(homeViewModel.equalizerEnabled)
+        mutableStateOf(settingsViewModel.equalizerEnabled)
     }
 
     var searchQuery by remember {
-        mutableStateOf(homeViewModel.searchQuery)
+        mutableStateOf(libraryViewModel.searchQuery)
     }
 
     var sleepTimerRemainingSeconds by remember { mutableStateOf<Int?>(null) }
 
     var sortMode by remember {
-        mutableStateOf(homeViewModel.sortMode)
+        mutableStateOf(settingsViewModel.sortMode)
     }
 
     fun currentSongFallbackDuration(): Int {
@@ -111,7 +115,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         if (selectedFolderUris.isNotEmpty()) {
-            songs = homeViewModel.loadSongsFromSelectedFolders()
+            songs = libraryViewModel.loadSongsFromSelectedFolders()
         }
     }
 
@@ -261,80 +265,32 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     fun clearPlaybackState() {
         mediaController?.pause()
 
-        playbackStateViewModel.savedSongUri = null
-        playbackStateViewModel.savedPosition = 0
-        playbackStateViewModel.playbackPosition = 0
-        playbackStateViewModel.playbackDuration = 0
-        playbackStateViewModel.pendingSeekPosition = null
+        playbackStateViewModel.clearPlaybackProgress()
 
         showPlayerScreen = false
 
-        homeViewModel.setCurrentSong(
-            songName = null,
-            songUri = null,
-            songIndex = null
-        )
-
-        homeViewModel.setIsPlaying(false)
-
-        homeViewModel.setPlaybackPosition(
-            position = 0,
-            duration = 0
-        )
-
-        context.getSharedPreferences(
-            "mused_prefs",
-            Context.MODE_PRIVATE
-        ).edit {
-            remove("current_song_uri")
-            remove("current_song_index")
-            remove("current_position_ms")
-        }
+        homeViewModel.clearPlaybackState()
     }
 
     fun clearFolders() {
         mediaController?.pause()
 
-        songs = homeViewModel.clearFolders()
-        selectedFolderUris = homeViewModel.selectedFolderUris
+        songs = libraryViewModel.clearFolders()
+        selectedFolderUris = libraryViewModel.selectedFolderUris
 
-        playbackStateViewModel.savedSongUri = null
-        playbackStateViewModel.savedPosition = 0
-        playbackStateViewModel.playbackPosition = 0
-        playbackStateViewModel.playbackDuration = 0
-        playbackStateViewModel.pendingSeekPosition = null
+        playbackStateViewModel.clearPlaybackProgress()
+        playbackStateViewModel.resetAutoResume()
 
-        playbackStateViewModel.hasAutoResumed = false
         showPlayerScreen = false
         sleepTimerRemainingSeconds = null
 
-        homeViewModel.setCurrentSong(
-            songName = null,
-            songUri = null,
-            songIndex = null
-        )
-
-        homeViewModel.setIsPlaying(false)
-
-        homeViewModel.setPlaybackPosition(
-            position = 0,
-            duration = 0
-        )
-
-        context.getSharedPreferences(
-            "mused_prefs",
-            Context.MODE_PRIVATE
-        ).edit {
-            remove("current_song_uri")
-            remove("current_song_index")
-            remove("current_position_ms")
-        }
+        homeViewModel.clearPlaybackState()
     }
 
     val playbackController = remember(
         mediaController,
         songs,
-        homeViewModel.mediaItems,
+        libraryViewModel.mediaItems,
         isShuffleEnabled,
         selectedRepeatMode,
         playbackUiState.currentSongIndex,
@@ -350,7 +306,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 songs
             },
             mediaItemsProvider = {
-                homeViewModel.mediaItems
+                libraryViewModel.mediaItems
             },
             shuffleEnabledProvider = {
                 isShuffleEnabled
@@ -469,8 +425,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 return@rememberFolderPickerLauncher
             }
 
-            songs = homeViewModel.addFolder(folderUri)
-            selectedFolderUris = homeViewModel.selectedFolderUris
+            songs = libraryViewModel.addFolder(folderUri)
+            selectedFolderUris = libraryViewModel.selectedFolderUris
             playbackStateViewModel.hasAutoResumed = false
         }
 
@@ -491,17 +447,17 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     dynamicThemeEnabled = dynamicThemeEnabled,
                     onDynamicThemeChange = { enabled ->
                         dynamicThemeEnabled =
-                            homeViewModel.updateDynamicTheme(enabled)
+                            settingsViewModel.updateDynamicTheme(enabled)
                     },
                     equalizerEnabled = equalizerEnabled,
                     onEqualizerEnabledChange = { enabled ->
                         equalizerEnabled =
-                            homeViewModel.updateEqualizerEnabled(enabled)
+                            settingsViewModel.updateEqualizerEnabled(enabled)
                     },
                     selectedEqualizerPreset =
-                        homeViewModel.selectedEqualizerPresetLabel(),
+                        settingsViewModel.selectedEqualizerPresetLabel(),
                     onEqualizerPresetSelected = { preset ->
-                        homeViewModel.updateEqualizerPreset(preset)
+                        settingsViewModel.updateEqualizerPreset(preset)
                     },
                     onBack = {
                         showSettingsScreen = false
@@ -580,7 +536,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     modifier = modifier,
                     selectedFolderUris = selectedFolderUris,
                     songs = songs,
-                    sortedSongs = homeViewModel.sortedSongs(),
+                    sortedSongs = libraryViewModel.sortedSongs(sortMode),
                     currentSongIndex = playbackUiState.currentSongIndex,
                     currentSongName = playbackUiState.currentSongName,
                     currentSongUri = playbackUiState.currentSongUri,
@@ -591,18 +547,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     sortMode = sortMode,
                     onSearchChange = { newSearchQuery ->
                         searchQuery =
-                            homeViewModel.updateSearchQuery(newSearchQuery)
+                            libraryViewModel.updateSearchQuery(newSearchQuery)
                     },
                     onSortModeChange = { newSortMode ->
                         sortMode =
-                            homeViewModel.updateSortMode(newSortMode)
+                            settingsViewModel.updateSortMode(newSortMode)
                     },
                     onPickFolder = {
                         openFolderPicker()
                     },
                     onRemoveFolder = { folderUriToRemove ->
-                        songs = homeViewModel.removeFolder(folderUriToRemove)
-                        selectedFolderUris = homeViewModel.selectedFolderUris
+                        songs = libraryViewModel.removeFolder(folderUriToRemove)
+                        selectedFolderUris = libraryViewModel.selectedFolderUris
                         playbackStateViewModel.hasAutoResumed = false
                     },
                     onPlaySong = { index ->
