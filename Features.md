@@ -2,7 +2,7 @@
 
 ## Goal
 
-MUSED is a modern offline Android music player focused on local music playback, smooth background listening, persistent playback state, clean UI, and advanced offline audio features.
+MUSED is a modern offline Android music player focused on local music playback, smooth background listening, persistent playback state, clean UI, and advanced offline audio architecture.
 
 Built using:
 
@@ -14,12 +14,30 @@ Built using:
 
 ---
 
+# Current Development Phase
+
+MUSED is now in the **refactor, optimization, and polish phase**.
+
+The current goal is **not to add new user-facing features**.
+
+Current focus:
+
+* Keep existing features stable
+* Improve architecture
+* Improve performance
+* Reduce duplicated logic
+* Prepare the app for future scalability
+* Polish existing UI/UX
+
+---
+
 # Chapter 1: Local Music Folder ✅
 
 ## Implemented
 
 * User selects music folders via system picker (SAF)
 * App scans and loads supported audio files
+* Recursive subfolder scanning
 * Fully offline playback
 * Folder selection persists across app restarts
 * User can add/remove folders anytime
@@ -34,10 +52,6 @@ Built using:
 * .flac
 * .ogg
 
-## Planned
-
-* Recursive subfolder scanning
-
 ---
 
 # Chapter 2: Song Library ✅
@@ -49,10 +63,11 @@ Built using:
 * Current playing song highlighting
 * Click any song to start playback
 * Auto-refresh after folder changes
-* Search filtering by song name
+* Search filtering by song name, artist, and album
 * Styled card-based song rows
 * Mini player inside library screen
 * Cached library loading for faster startup
+* Cached filtered/sorted visible song list for better large-library performance
 
 ## Sorting System ✅
 
@@ -71,11 +86,11 @@ Built using:
 
 # Chapter 3: Playback System ✅
 
-## Implemented (Media3-based)
+## Implemented
 
 * Play / Pause
 * Next / Previous
-* Playlist queue (entire library)
+* Playlist queue using current library
 * Auto-play next track
 * Seek bar support
 * Smooth seeking
@@ -87,7 +102,7 @@ Built using:
 ## UI Features
 
 * Material icon controls
-* Time display (mm:ss / mm:ss)
+* Time display
 * Shuffle mode
 * Repeat modes:
   * Off
@@ -105,7 +120,7 @@ Built using:
 * Playback position
 * Shuffle state
 * Repeat mode
-* Current playlist state
+* Current song index
 * Sort mode
 * Dynamic theme preference
 * Equalizer state
@@ -116,8 +131,8 @@ Built using:
 * Playback state saved automatically
 * Position restored after app restart
 * Resume after seeking
-* Persistent queue restoration
 * Safe handling for missing files
+* Safe handling for invalid saved URI
 
 ---
 
@@ -128,12 +143,12 @@ Built using:
 * App automatically restores:
   * Last song
   * Playback position
-  * Queue context
+  * Queue context from current library
   * Shuffle/repeat state
 
 ## Flow
 
-App launch → files load → restore playback state
+App launch → files load → saved song is validated → playback state restored
 
 ## Safety
 
@@ -190,34 +205,9 @@ App launch → files load → restore playback state
 * Audio becoming noisy receiver
 * Auto-pause on disconnect events
 
-## Planned
+## Current Status
 
-### Earbud Integration
-
-* Reliable earbud play/pause handling
-* Hardware next/previous support
-* Single-tap media controls
-* Double-tap next track support
-* Triple-tap previous track support
-
-### Smart Pause Features
-
-* Resume after reconnect
-* Advanced audio route detection
-
-## Android Integration
-
-### Audio Becoming Noisy Receiver ✅
-
-Uses:
-
-* `AudioManager.ACTION_AUDIO_BECOMING_NOISY`
-
-Purpose:
-
-* Detect wired headphone unplug
-* Detect Bluetooth disconnect
-* Automatically pause playback before audio switches to speaker
+Good enough for current refactor phase. Deeper earbud-specific behavior should wait until after architecture/polish work.
 
 ---
 
@@ -231,11 +221,14 @@ Purpose:
   * Mini player
   * Notifications
   * Lock screen
-
-## Metadata
-
+* Album art memory cache
+* Persistent album art disk cache
+* Metadata extraction
+* Metadata cache
 * Song title support
-* Artist metadata support ("MUSED")
+* Artist metadata support
+* Album metadata support
+* Duration metadata support
 
 ---
 
@@ -256,10 +249,11 @@ Purpose:
 * SAF-based folder access
 * No broad storage permission required
 * Access limited to selected folders only
+* Offline-only local data handling
 
 ---
 
-# Chapter 12: UI / UX Redesign ✅
+# Chapter 12: UI / UX Redesign ✅ / 🟡
 
 ## Implemented
 
@@ -275,10 +269,11 @@ Purpose:
 * Current-song highlighting
 * Responsive Compose UI
 
-## Planned
+## Still to polish
 
 * OLED dark mode polish
-* Advanced animations
+* Smoother animations
+* Improved player layout
 * Enhanced transitions
 
 ---
@@ -292,6 +287,7 @@ Mini player shown inside library screen:
 * Album art
 * Song title
 * Play / Pause button
+* Progress indicator
 * Tap to reopen player screen
 
 ---
@@ -301,7 +297,10 @@ Mini player shown inside library screen:
 ## Implemented
 
 * Real-time filtering by song name
+* Artist filtering
+* Album filtering
 * Case-insensitive matching
+* Cached visible list updates
 
 ---
 
@@ -313,6 +312,10 @@ Mini player shown inside library screen:
 * Queue shown inside player screen
 * Tap queue item to instantly play song
 * Current song highlighting inside queue
+
+## Current Status
+
+Queue behavior is functional. Advanced queue editing is not part of the current refactor phase.
 
 ---
 
@@ -364,15 +367,17 @@ Mini player shown inside library screen:
 ## Architecture
 
 * Dedicated `AudioEffectsManager`
-* Live SharedPreferences listener support
 * Service-level audio effect management
+* Preferences routed through `AppPreferences`
 
-## Planned
+## Not current focus
 
 * Full equalizer sliders
 * Band controls
 * Audio visualizer
 * Bass strength controls
+
+These are future features and should wait until refactor/polish phase is complete.
 
 ---
 
@@ -383,13 +388,19 @@ Mini player shown inside library screen:
 * Song cache system
 * Faster library startup
 * Cached song restoration
-
-## Planned
-
 * Metadata caching
-* Recursive optimized scanning
-* Large library optimization
-* Lazy loading improvements
+* Recursive scanning
+* Album art memory cache
+* Persistent album art disk cache
+* Cached filtered/sorted song list
+* Playback progress tracking moved out of `HomeScreen`
+
+## Still to improve
+
+* Large library stress testing
+* More efficient metadata loading for huge libraries
+* Incremental library refresh
+* Possible lazy loading improvements
 
 ---
 
@@ -400,29 +411,37 @@ Mini player shown inside library screen:
 * Jetpack Compose UI
 * Media3 playback engine
 * MediaSessionService background service
-* SharedPreferences persistence
 * SAF file access
+* Repository layer
+* Centralized preferences wrapper
+* Dedicated playback controller
+* Dedicated MediaController manager
+* Dedicated library ViewModel
+* Dedicated settings ViewModel
+* Dedicated playback runtime/progress ViewModel
 * Dedicated audio effects manager
 
-## Current Refactors
+## Completed Refactors
 
 * Playback metadata extraction moved out of UI
 * Media item building separated into helper layer
 * Folder loading separated into reusable readers
 * Song caching system added
 * Audio effects separated into dedicated manager
-
-## Planned Refactors
-
-* ViewModel architecture
-* Dedicated playback manager
-* Better state separation
-* Repository pattern
-* Improved service/UI synchronization
+* Playback actions moved out of `HomeScreen`
+* Playback persistence moved out of `HomeScreen`
+* MediaController connection moved into `MediaControllerManager`
+* Runtime playback state moved into `PlaybackStateViewModel`
+* Library state moved into `LibraryViewModel`
+* Settings state moved into `SettingsViewModel`
+* Preferences centralized in `AppPreferences`
+* Repository pattern introduced with `MusicRepository`
+* Filtered/sorted song list cached in `LibraryViewModel`
+* Album art disk cache added
 
 ---
 
-# Version 1 Scope — ACHIEVED ✅
+# Version 1 Scope — Achieved ✅
 
 ## Original Goals
 
@@ -433,72 +452,84 @@ Mini player shown inside library screen:
 5. Auto next ✔
 6. Save/restore playback ✔
 
-## Expanded Features
+## Expanded Achieved Features
 
-7. Background playback ✔
-8. Notification controls ✔
-9. Lock screen controls ✔
-10. Auto resume ✔
-11. Seek bar ✔
-12. Playlist queue ✔
-13. Album art ✔
-14. Shuffle / Repeat ✔
-15. Search ✔
-16. Styled UI ✔
-17. Mini player ✔
-18. Sorting system ✔
-19. Queue system ✔
-20. Multiple folder support ✔
-21. Settings screen ✔
-22. Dynamic themes ✔
-23. Equalizer presets ✔
-24. Song caching ✔
-
----
-
-# 🚀 Version 2 Roadmap
-
-## High Priority
-
-### 1. Recursive Folder Scanning
-
-* Detect music inside subfolders
-* Better real-world library support
+7. Recursive folder scanning ✔
+8. Background playback ✔
+9. Notification controls ✔
+10. Lock screen controls ✔
+11. Auto resume ✔
+12. Seek bar ✔
+13. Playlist queue ✔
+14. Album art ✔
+15. Shuffle / Repeat ✔
+16. Search ✔
+17. Styled UI ✔
+18. Mini player ✔
+19. Sorting system ✔
+20. Queue system ✔
+21. Multiple folder support ✔
+22. Settings screen ✔
+23. Dynamic themes ✔
+24. Equalizer presets ✔
+25. Song caching ✔
+26. Metadata caching ✔
+27. Album art disk cache ✔
+28. Multi-ViewModel architecture ✔
+29. Repository layer ✔
+30. Centralized preferences wrapper ✔
 
 ---
 
-### 2. Metadata Caching
+# Current Remaining Work
 
-* Faster startup
-* Reduced SAF scanning overhead
+Since we are **not adding new features right now**, the remaining work is mostly cleanup, optimization, and polish.
+
+## 1. UI Polish 🟡
+
+* OLED dark mode polish
+* Smoother animations
+* Improved player layout
+* Better visual hierarchy
+* More polished mini player/player transitions
+
+## 2. Large Library Optimization 🟡
+
+* Stress test with hundreds/thousands of songs
+* Optimize metadata loading further if needed
+* Consider incremental refresh
+* Consider lazy loading only if performance requires it
+
+## 3. Architecture Cleanup 🟡
+
+* Reduce remaining duplicated playback state where possible
+* Continue shrinking `HomeScreen`
+* Consider moving remaining side-effect logic into helper/controller layers
+* Consider DataStore migration later, after SharedPreferences wrapper remains stable
+
+## 4. Testing / Stability 🟡
+
+* Test folder removal while playing
+* Test missing/deleted files
+* Test large folders
+* Test app restart/auto-resume repeatedly
+* Test Bluetooth/headphone disconnect behavior
+* Test notification and lock screen controls after long background playback
 
 ---
 
+# Recommended Next Steps
 
-## UI / UX Improvements
+## No new features
 
-### 4. Animations
+Current recommended order:
 
-* Screen transitions
-* Mini player animations
-* Playback animations
-
----
-
-### 5. Better Dark Mode
-
-* OLED-friendly colors
-* Enhanced contrast
-
----
-
-## Architecture Improvements
-
-### 7. ViewModel Refactor
-
-* Cleaner state management
-* Better Compose architecture
-* Improved lifecycle handling
+1. UI polish pass for existing PlayerScreen
+2. OLED dark mode polish
+3. Large library stress testing
+4. Fix only performance problems found during testing
+5. Final architecture cleanup
+6. README/features documentation update
 
 ---
 
@@ -507,10 +538,13 @@ Mini player shown inside library screen:
 MUSED is now a portfolio-level offline Android music player featuring:
 
 * Multi-folder local playback
+* Recursive folder scanning
 * Background playback
 * Notification & lock screen controls
 * Persistent playback restoration
 * Album art support
+* Album art disk caching
+* Metadata caching
 * Search functionality
 * Sorting system
 * Queue system
@@ -523,5 +557,8 @@ MUSED is now a portfolio-level offline Android music player featuring:
 * Modern Compose UI
 * Media3 architecture
 * Audio effects system
+* Repository architecture
+* Multi-ViewModel state separation
+* Centralized preferences wrapper
 
-MUSED has evolved far beyond a basic prototype and is now entering advanced Version 2 development focused on scalability, audio enhancement, performance optimization, and architecture refinement.
+MUSED has moved beyond prototype architecture and is now in the final refactor, optimization, and UI polish phase.

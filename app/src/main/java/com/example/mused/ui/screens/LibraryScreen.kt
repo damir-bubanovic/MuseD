@@ -331,66 +331,90 @@ fun LibraryScreen(
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut()
         ) {
-            Column {
-                Spacer(Modifier.height(10.dp))
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenPlayer() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-                ) {
-                    Column {
-                        LinearProgressIndicator(
-                            progress = {
-                                if (playbackDuration > 0) {
-                                    playbackPosition.toFloat() /
-                                            playbackDuration.toFloat()
-                                } else {
-                                    0f
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.primaryContainer
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenPlayer() },
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 3.dp
+                )
+            ) {
+
+                Column {
+
+                    LinearProgressIndicator(
+                        progress = {
+                            if (playbackDuration > 0) {
+                                playbackPosition.toFloat() /
+                                        playbackDuration.toFloat()
+                            } else {
+                                0f
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        AlbumArt(
+                            songUri = currentSongUri,
+                            modifier = Modifier.size(52.dp)
                         )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AlbumArt(
-                                songUri = currentSongUri,
-                                modifier = Modifier.size(48.dp)
-                            )
+                        Spacer(Modifier.width(12.dp))
 
-                            Spacer(Modifier.width(12.dp))
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
 
                             Text(
                                 text = currentSongName ?: "",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1
                             )
 
-                            IconButton(onClick = onPlayPause) {
-                                Icon(
+                            Spacer(Modifier.height(2.dp))
+
+                            Text(
+                                text =
+                                    if (isPlaying)
+                                        "Playing"
+                                    else
+                                        "Paused",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onPlayPause
+                        ) {
+
+                            Icon(
+                                imageVector =
                                     if (isPlaying)
                                         Icons.Filled.Pause
                                     else
                                         Icons.Filled.PlayArrow,
-                                    contentDescription = "Play/Pause",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
+                                contentDescription = "Play/Pause",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 }
