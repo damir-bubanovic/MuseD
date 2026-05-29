@@ -91,7 +91,7 @@ Current focus:
 * Play / Pause
 * Next / Previous
 * Playlist queue using current library
-* Auto-play next track
+* Autoplay next track
 * Seek bar support
 * Smooth seeking
 * Background playback
@@ -459,30 +459,30 @@ These are future features and should wait until refactor/polish phase is complet
 
 ## Expanded Achieved Features
 
-7. Recursive folder scanning ✔
-8. Background playback ✔
-9. Notification controls ✔
-10. Lock screen controls ✔
-11. Auto resume ✔
-12. Seek bar ✔
-13. Playlist queue ✔
-14. Album art ✔
-15. Shuffle / Repeat ✔
-16. Search ✔
-17. Styled UI ✔
-18. Mini player ✔
-19. Sorting system ✔
-20. Queue system ✔
-21. Multiple folder support ✔
-22. Settings screen ✔
-23. Dynamic themes ✔
-24. Equalizer presets ✔
-25. Song caching ✔
-26. Metadata caching ✔
-27. Album art disk cache ✔
-28. Multi-ViewModel architecture ✔
-29. Repository layer ✔
-30. Centralized preferences wrapper ✔
+1. Recursive folder scanning ✔
+2. Background playback ✔
+3. Notification controls ✔
+4. Lock screen controls ✔
+5. Auto resume ✔
+6. Seek bar ✔
+7. Playlist queue ✔
+8. Album art ✔
+9. Shuffle / Repeat ✔
+10. Search ✔
+11. Styled UI ✔
+12. Mini player ✔
+13. Sorting system ✔
+14. Queue system ✔
+15. Multiple folder support ✔
+16. Settings screen ✔
+17. Dynamic themes ✔
+18. Equalizer presets ✔
+19. Song caching ✔
+20. Metadata caching ✔
+21. Album art disk cache ✔
+22. Multi-ViewModel architecture ✔
+23. Repository layer ✔
+24. Centralized preferences wrapper ✔
 
 ---
 # Current Remaining Work
