@@ -408,9 +408,18 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 songIndex = savedIndex
             )
 
-            playbackController.playSong(savedIndex)
+            mediaController?.apply {
+                setMediaItems(
+                    libraryViewModel.mediaItems,
+                    savedIndex,
+                    positionToResume.toLong()
+                )
 
-            mediaController?.seekTo(positionToResume.toLong())
+                shuffleModeEnabled = isShuffleEnabled
+                repeatMode = PlaybackController.toMedia3RepeatMode(selectedRepeatMode)
+
+                prepare()
+            }
 
             playbackStateViewModel.playbackPosition = positionToResume
 
@@ -541,7 +550,6 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     selectedFolderUris = selectedFolderUris,
                     songs = songs,
                     sortedSongs = libraryViewModel.visibleSongs,
-
                     currentSongIndex = playbackUiState.currentSongIndex,
                     currentSongName = playbackUiState.currentSongName,
                     currentSongUri = playbackUiState.currentSongUri,

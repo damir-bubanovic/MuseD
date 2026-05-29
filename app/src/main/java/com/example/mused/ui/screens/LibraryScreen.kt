@@ -13,8 +13,18 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,11 +32,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -35,6 +61,10 @@ import androidx.compose.ui.unit.dp
 import com.example.mused.R
 import com.example.mused.models.SongData
 import com.example.mused.ui.components.AlbumArt
+import com.example.mused.ui.theme.MusedCardSurface
+import com.example.mused.ui.theme.MusedDarkSurface
+import com.example.mused.ui.theme.MusedRed
+import com.example.mused.ui.theme.MusedSurfaceVariant
 import com.example.mused.utils.formatFolderName
 
 @Composable
@@ -63,49 +93,62 @@ fun LibraryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(Color.Black)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.mused_header_logo),
                 contentDescription = "MuseD Logo",
-                modifier = Modifier.size(42.dp),
+                modifier = Modifier.size(40.dp),
                 contentScale = ContentScale.Fit
             )
 
             Spacer(Modifier.width(12.dp))
 
-            Text(
-                text = "MuseD",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = onPickFolder,
+            Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Add Music Folder")
+                Text(
+                    text = "MuseD",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MusedRed,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${songs.size} songs",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            OutlinedButton(onClick = onOpenSettings) {
+            OutlinedButton(
+                onClick = onOpenSettings,
+                shape = RoundedCornerShape(50)
+            ) {
                 Text("Settings")
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(14.dp))
+
+        Button(
+            onClick = onPickFolder,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text("Add Music Folder")
+        }
 
         if (selectedFolderUris.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+
             Text(
-                text = "Folders:",
+                text = "Folders",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold
@@ -118,20 +161,18 @@ fun LibraryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 3.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = MusedDarkSurface
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 0.dp
                     )
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                start = 10.dp,
-                                end = 4.dp,
-                                top = 6.dp,
-                                bottom = 6.dp
-                            ),
+                            .padding(start = 12.dp, end = 2.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -152,63 +193,54 @@ fun LibraryScreen(
                     }
                 }
             }
-
-            Spacer(Modifier.height(12.dp))
         }
+
+        Spacer(Modifier.height(12.dp))
 
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChange,
             label = { Text("Search songs") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(18.dp)
         )
 
         Spacer(Modifier.height(10.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Sort:",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(Modifier.width(8.dp))
-
-            SortButton(
+            SortChip(
                 label = "Name A-Z",
                 selected = sortMode == "Name A-Z",
                 onClick = { onSortModeChange("Name A-Z") }
             )
 
-            Spacer(Modifier.width(6.dp))
-
-            SortButton(
+            SortChip(
                 label = "Name Z-A",
                 selected = sortMode == "Name Z-A",
                 onClick = { onSortModeChange("Name Z-A") }
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(6.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SortButton(
-                label = "Newest First",
+            SortChip(
+                label = "Newest",
                 selected = sortMode == "Newest First",
                 onClick = { onSortModeChange("Newest First") }
             )
 
-            Spacer(Modifier.width(6.dp))
-
-            SortButton(
-                label = "Oldest First",
+            SortChip(
+                label = "Oldest",
                 selected = sortMode == "Oldest First",
                 onClick = { onSortModeChange("Oldest First") }
             )
@@ -220,7 +252,7 @@ fun LibraryScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             itemsIndexed(sortedSongs) { _, song ->
                 val index =
@@ -231,15 +263,16 @@ fun LibraryScreen(
                 val isCurrentSong = index == currentSongIndex
 
                 val animatedCardColor by animateColorAsState(
-                    targetValue = if (isCurrentSong)
-                        MaterialTheme.colorScheme.primaryContainer
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant,
+                    targetValue = if (isCurrentSong) {
+                        MusedSurfaceVariant
+                    } else {
+                        MusedCardSurface
+                    },
                     label = "SongRowColorAnimation"
                 )
 
                 val animatedElevation by animateDpAsState(
-                    targetValue = if (isCurrentSong) 4.dp else 1.dp,
+                    targetValue = if (isCurrentSong) 3.dp else 0.dp,
                     label = "SongRowElevationAnimation"
                 )
 
@@ -250,7 +283,7 @@ fun LibraryScreen(
 
                 val pulseScale by pulseTransition.animateFloat(
                     initialValue = 1f,
-                    targetValue = if (isCurrentSong && isPlaying) 1.25f else 1f,
+                    targetValue = if (isCurrentSong && isPlaying) 1.18f else 1f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(durationMillis = 700),
                         repeatMode = RepeatMode.Reverse
@@ -266,7 +299,7 @@ fun LibraryScreen(
                                 onPlaySong(index)
                             }
                         },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = animatedCardColor
                     ),
@@ -277,20 +310,20 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = if (isCurrentSong) "▶" else "",
                             modifier = Modifier
-                                .width(24.dp)
+                                .width(22.dp)
                                 .graphicsLayer {
                                     scaleX =
                                         if (isCurrentSong && isPlaying) pulseScale else 1f
                                     scaleY =
                                         if (isCurrentSong && isPlaying) pulseScale else 1f
                                 },
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MusedRed,
                             fontWeight = FontWeight.Bold
                         )
 
@@ -300,24 +333,25 @@ fun LibraryScreen(
                             Text(
                                 text = song.title,
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (isCurrentSong)
+                                fontWeight = if (isCurrentSong) {
                                     FontWeight.Bold
-                                else
-                                    FontWeight.Normal,
-                                color = if (isCurrentSong)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                } else {
+                                    FontWeight.Normal
+                                },
+                                color = if (isCurrentSong) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                                 maxLines = 1
                             )
+
+                            Spacer(Modifier.height(2.dp))
 
                             Text(
                                 text = song.artist,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (isCurrentSong)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1
                             )
                         }
@@ -331,22 +365,19 @@ fun LibraryScreen(
             enter = slideInVertically { it } + fadeIn(),
             exit = slideOutVertically { it } + fadeOut()
         ) {
-
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onOpenPlayer() },
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MusedCardSurface
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 3.dp
                 )
             ) {
-
                 Column {
-
                     LinearProgressIndicator(
                         progress = {
                             if (playbackDuration > 0) {
@@ -359,8 +390,8 @@ fun LibraryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        color = MusedRed,
+                        trackColor = MusedSurfaceVariant
                     )
 
                     Row(
@@ -369,7 +400,6 @@ fun LibraryScreen(
                             .padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         AlbumArt(
                             songUri = currentSongUri,
                             modifier = Modifier.size(52.dp)
@@ -380,7 +410,6 @@ fun LibraryScreen(
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
-
                             Text(
                                 text = currentSongName ?: "",
                                 style = MaterialTheme.typography.bodyLarge,
@@ -393,10 +422,11 @@ fun LibraryScreen(
 
                             Text(
                                 text =
-                                    if (isPlaying)
+                                    if (isPlaying) {
                                         "Playing"
-                                    else
-                                        "Paused",
+                                    } else {
+                                        "Paused"
+                                    },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -405,15 +435,15 @@ fun LibraryScreen(
                         IconButton(
                             onClick = onPlayPause
                         ) {
-
                             Icon(
                                 imageVector =
-                                    if (isPlaying)
+                                    if (isPlaying) {
                                         Icons.Filled.Pause
-                                    else
-                                        Icons.Filled.PlayArrow,
+                                    } else {
+                                        Icons.Filled.PlayArrow
+                                    },
                                 contentDescription = "Play/Pause",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MusedRed
                             )
                         }
                     }
@@ -424,23 +454,30 @@ fun LibraryScreen(
 }
 
 @Composable
-private fun SortButton(
+private fun SortChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    TextButton(
+    FilterChip(
+        selected = selected,
         onClick = onClick,
-        colors = ButtonDefaults.textButtonColors(
-            contentColor = if (selected)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant
+        label = {
+            Text(
+                text = label,
+                fontWeight = if (selected) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Normal
+                }
+            )
+        },
+        shape = RoundedCornerShape(50),
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MusedDarkSurface,
+            selectedContainerColor = MusedSurfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedLabelColor = MusedRed
         )
-    ) {
-        Text(
-            text = label,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
-    }
+    )
 }

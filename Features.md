@@ -16,7 +16,7 @@ Built using:
 
 # Current Development Phase
 
-MUSED is now in the **refactor, optimization, and polish phase**.
+MUSED is now in the **final stabilization, testing, and release-preparation phase**.
 
 The current goal is **not to add new user-facing features**.
 
@@ -27,7 +27,7 @@ Current focus:
 * Improve performance
 * Reduce duplicated logic
 * Prepare the app for future scalability
-* Polish existing UI/UX
+* Keep the completed UI consistent while focusing on testing and stability
 
 ---
 
@@ -253,7 +253,7 @@ Good enough for current refactor phase. Deeper earbud-specific behavior should w
 
 ---
 
-# Chapter 12: UI / UX Redesign ✅ / 🟡
+# Chapter 12: UI / UX Redesign ✅
 
 ## Implemented
 
@@ -269,12 +269,16 @@ Good enough for current refactor phase. Deeper earbud-specific behavior should w
 * Current-song highlighting
 * Responsive Compose UI
 
-## Still to polish
+## Completed Polish
 
-* OLED dark mode polish
-* Smoother animations
-* Improved player layout
-* Enhanced transitions
+* OLED dark mode styling
+* Modernized player layout
+* Queue-first player screen
+* Polished mini player
+* Polished settings screen
+* Polished library screen
+* Improved visual hierarchy
+* Better spacing and component consistency
 
 ---
 
@@ -438,6 +442,7 @@ These are future features and should wait until refactor/polish phase is complet
 * Repository pattern introduced with `MusicRepository`
 * Filtered/sorted song list cached in `LibraryViewModel`
 * Album art disk cache added
+* Final UI polish completed across Player, Library, Mini Player, and Settings screens
 
 ---
 
@@ -485,13 +490,14 @@ These are future features and should wait until refactor/polish phase is complet
 
 Since we are **not adding new features right now**, the remaining work is mostly cleanup, optimization, and polish.
 
-## 1. UI Polish 🟡
+## 1. Testing / Stability 🟡
 
-* OLED dark mode polish
-* Smoother animations
-* Improved player layout
-* Better visual hierarchy
-* More polished mini player/player transitions
+* Test folder removal while playing
+* Test missing/deleted files
+* Test large folders
+* Test app restart/auto-resume repeatedly
+* Test Bluetooth/headphone disconnect behavior
+* Test notification and lock screen controls after long background playback
 
 ## 2. Large Library Optimization 🟡
 
@@ -502,19 +508,17 @@ Since we are **not adding new features right now**, the remaining work is mostly
 
 ## 3. Architecture Cleanup 🟡
 
-* Reduce remaining duplicated playback state where possible
-* Continue shrinking `HomeScreen`
-* Consider moving remaining side-effect logic into helper/controller layers
+* Reduce remaining duplicated playback state only if it becomes a maintenance problem
+* Keep `HomeScreen` stable unless a bug or performance issue requires cleanup
 * Consider DataStore migration later, after SharedPreferences wrapper remains stable
 
-## 4. Testing / Stability 🟡
+## 4. Release Preparation 🟡
 
-* Test folder removal while playing
-* Test missing/deleted files
-* Test large folders
-* Test app restart/auto-resume repeatedly
-* Test Bluetooth/headphone disconnect behavior
-* Test notification and lock screen controls after long background playback
+* Final README cleanup
+* Final features documentation cleanup
+* Create a stable test checklist
+* Review app version naming
+* Prepare screenshots for GitHub/portfolio use
 
 ---
 
@@ -524,12 +528,12 @@ Since we are **not adding new features right now**, the remaining work is mostly
 
 Current recommended order:
 
-1. UI polish pass for existing PlayerScreen
-2. OLED dark mode polish
-3. Large library stress testing
-4. Fix only performance problems found during testing
-5. Final architecture cleanup
-6. README/features documentation update
+1. Full stability test pass
+2. Large library stress testing
+3. Fix only bugs or performance problems found during testing
+4. Final README/features documentation update
+5. Prepare release/portfolio screenshots
+6. Create a final version tag when stable
 
 ---
 
@@ -561,4 +565,4 @@ MUSED is now a portfolio-level offline Android music player featuring:
 * Multi-ViewModel state separation
 * Centralized preferences wrapper
 
-MUSED has moved beyond prototype architecture and is now in the final refactor, optimization, and UI polish phase.
+MUSED has moved beyond prototype architecture and is now in the final stabilization, testing, and release-preparation phase.
