@@ -86,30 +86,6 @@ class PlaybackStateViewModel : ViewModel() {
         playbackDuration = duration
     }
 
-    fun updatePlaybackPosition(position: Int) {
-        playbackPosition = position
-    }
-
-    fun updatePlaybackDuration(duration: Int) {
-        playbackDuration = duration
-    }
-
-    fun updatePendingSeekPosition(position: Int?) {
-        pendingSeekPosition = position
-    }
-
-    fun updateSavedPlayback(
-        songUri: String?,
-        position: Int
-    ) {
-        savedSongUri = songUri
-        savedPosition = position
-    }
-
-    fun markAutoResumed() {
-        hasAutoResumed = true
-    }
-
     fun resetAutoResume() {
         hasAutoResumed = false
     }

@@ -86,7 +86,6 @@ fun SettingsScreen(
             title = "Library"
         ) {
             SettingsInfoRow(
-                title = "Default Sort Mode",
                 subtitle = currentSortMode
             )
 
@@ -214,14 +213,13 @@ private fun SettingsSectionCard(
 
 @Composable
 private fun SettingsInfoRow(
-    title: String,
     subtitle: String
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = title,
+            text = "Default Sort Mode",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface

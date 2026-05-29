@@ -157,15 +157,15 @@ class LibraryViewModel(
 
         val sortedSongs =
             when (sortMode) {
-                "Name Z-A" -> filteredSongs.sortedByDescending { song ->
+                SORT_NAME_DESC -> filteredSongs.sortedByDescending { song ->
                     song.title.lowercase()
                 }
 
-                "Newest First" -> filteredSongs.sortedByDescending { song ->
+                SORT_NEWEST_FIRST -> filteredSongs.sortedByDescending { song ->
                     song.lastModified
                 }
 
-                "Oldest First" -> filteredSongs.sortedBy { song ->
+                SORT_OLDEST_FIRST -> filteredSongs.sortedBy { song ->
                     song.lastModified
                 }
 
@@ -184,10 +184,6 @@ class LibraryViewModel(
         return visibleSongs
     }
 
-    fun sortedSongs(sortMode: String): List<SongData> {
-        return refreshVisibleSongs(sortMode)
-    }
-
     private fun invalidateVisibleSongsCache() {
         cachedSourceSongs = emptyList()
         cachedSearchQuery = ""
@@ -196,6 +192,11 @@ class LibraryViewModel(
     }
 
     private companion object {
-        private const val DEFAULT_SORT_MODE = "Name A-Z"
+        private const val SORT_NAME_ASC = "Name A-Z"
+        private const val SORT_NAME_DESC = "Name Z-A"
+        private const val SORT_NEWEST_FIRST = "Newest First"
+        private const val SORT_OLDEST_FIRST = "Oldest First"
+
+        private const val DEFAULT_SORT_MODE = SORT_NAME_ASC
     }
 }

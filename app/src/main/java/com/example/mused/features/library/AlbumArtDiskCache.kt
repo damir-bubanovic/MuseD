@@ -61,20 +61,6 @@ object AlbumArtDiskCache {
         )
     }
 
-    fun clear(
-        context: Context
-    ) {
-        val cacheDirectory =
-            File(
-                context.cacheDir,
-                CACHE_FOLDER_NAME
-            )
-
-        if (cacheDirectory.exists()) {
-            cacheDirectory.deleteRecursively()
-        }
-    }
-
     private fun extractArtworkBytes(
         context: Context,
         songUriString: String

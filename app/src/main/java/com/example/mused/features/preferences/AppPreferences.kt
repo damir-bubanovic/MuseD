@@ -98,20 +98,8 @@ class AppPreferences(
         return prefs.getBoolean(SHUFFLE_ENABLED_KEY, false)
     }
 
-    fun saveShuffleEnabled(enabled: Boolean) {
-        prefs.edit {
-            putBoolean(SHUFFLE_ENABLED_KEY, enabled)
-        }
-    }
-
     fun loadRepeatMode(): Int {
         return prefs.getInt(REPEAT_MODE_KEY, 0)
-    }
-
-    fun saveRepeatMode(repeatMode: Int) {
-        prefs.edit {
-            putInt(REPEAT_MODE_KEY, repeatMode)
-        }
     }
 
     fun savePlaybackState(

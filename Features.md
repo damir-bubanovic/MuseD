@@ -485,31 +485,50 @@ These are future features and should wait until refactor/polish phase is complet
 30. Centralized preferences wrapper ✔
 
 ---
-
 # Current Remaining Work
 
 Since we are **not adding new features right now**, the remaining work is mostly cleanup, optimization, and polish.
 
 ## 1. Testing / Stability 🟡
 
-* Test folder removal while playing
-* Test missing/deleted files
-* Test large folders
-* Test app restart/auto-resume repeatedly
-* Test Bluetooth/headphone disconnect behavior
-* Test notification and lock screen controls after long background playback
+### Completed
+
+* Folder persistence testing ✔
+* Playback position restore testing ✔
+* Auto-resume testing ✔
+* Folder removal while playing ✔
+* Clear playback state testing ✔
+* Shuffle/repeat persistence testing ✔
+* Large library stress testing (100+ songs) ✔
+* Background playback testing ✔
+* Notification controls testing ✔
+
+### Still Recommended
+
+* Missing/deleted file testing
+* Bluetooth/headphone disconnect testing
+* Long-duration background playback testing
+* Real-device testing (non-emulator)
 
 ## 2. Large Library Optimization 🟡
 
-* Stress test with hundreds/thousands of songs
-* Optimize metadata loading further if needed
-* Consider incremental refresh
-* Consider lazy loading only if performance requires it
+### Completed
+
+* Stress testing with 100+ songs ✔
+* Multi-folder library testing ✔
+* Album art testing across folders ✔
+* Search performance testing ✔
+
+### Future Improvements (Only If Needed)
+
+* More efficient metadata loading for huge libraries
+* Incremental library refresh
+* Lazy loading for extremely large libraries
 
 ## 3. Architecture Cleanup 🟡
 
 * Reduce remaining duplicated playback state only if it becomes a maintenance problem
-* Keep `HomeScreen` stable unless a bug or performance issue requires cleanup
+* Keep HomeScreen stable unless a bug or performance issue requires cleanup
 * Consider DataStore migration later, after SharedPreferences wrapper remains stable
 
 ## 4. Release Preparation 🟡
@@ -519,7 +538,7 @@ Since we are **not adding new features right now**, the remaining work is mostly
 * Create a stable test checklist
 * Review app version naming
 * Prepare screenshots for GitHub/portfolio use
-
+* Create Version 1.0 release tag
 ---
 
 # Recommended Next Steps
