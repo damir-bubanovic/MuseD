@@ -1,62 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
-   width="512"
-   height="512"
-   viewBox="0 0 135.46666 135.46667"
-   version="1.1"
-   id="svg1"
-   inkscape:version="1.4.4 (1:1.4.4+202605061436+dcaf3e7d9e)"
-   sodipodi:docname="logo.svg"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="true"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     inkscape:zoom="0.64000703"
-     inkscape:cx="253.90346"
-     inkscape:cy="207.81022"
-     inkscape:window-width="1360"
-     inkscape:window-height="710"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer2" />
-  <defs
-     id="defs1" />
-  <g
-     inkscape:label="Background"
-     inkscape:groupmode="layer"
-     id="layer1" />
-  <g
-     inkscape:groupmode="layer"
-     id="layer2"
-     inkscape:label="Logo">
-    <path
-       style="baseline-shift:baseline;display:inline;overflow:visible;vector-effect:none;fill:#ffffff;stroke-linecap:round;stroke-linejoin:round;enable-background:accumulate;stop-color:#000000;stop-opacity:1;opacity:1"
-       d="m 84.832031,33.326172 a 7.50075,7.50075 0 0 0 -4.267578,3.625 L 65.234375,66.117187 58.15625,41.849609 A 7.50075,7.50075 0 0 0 44.570312,40.013672 L 15.923828,86.494141 A 7.5,7.5 0 0 0 18.373047,96.8125 7.5,7.5 0 0 0 28.693359,94.363281 l 19.789063,-32.107422 7.550781,25.888672 a 7.50075,7.50075 0 0 0 13.837891,1.388672 L 86.091797,58.675781 98.021484,90.162109 a 7.5,7.5 0 0 0 9.671876,4.357422 7.5,7.5 0 0 0 4.35547,-9.671875 L 94.216797,37.783203 a 7.50075,7.50075 0 0 0 -9.384766,-4.457031 z"
-       id="path1" />
-    <path
-       id="path2"
-       style="fill:#ffffff;stroke-width:58.889;stroke-linecap:round;stroke-linejoin:round"
-       inkscape:label="Circle"
-       d="m 120.65853,87.031181 a 15.493111,15.493111 0 0 1 -15.49311,15.493109 15.493111,15.493111 0 0 1 -15.49311,-15.493109 15.493111,15.493111 0 0 1 15.49311,-15.49311 15.493111,15.493111 0 0 1 15.49311,15.49311 z" />
-    <path
-       id="path3"
-       style="fill:#333333;stroke-width:15;stroke-linecap:round;stroke-linejoin:round"
-       inkscape:label="Triangle"
-       inkscape:transform-center-x="-2.5876036"
-       transform="matrix(0.81988982,0,0,0.70172316,134.71211,60.961746)"
-       d="m -24.50085,38.294292 -9.468113,5.466418 -9.468112,5.466417 0,-10.932835 0,-10.932834 9.468113,5.466417 z" />
-  </g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" version="1.1" viewBox="0 0 135.47 135.47" xmlns="http://www.w3.org/2000/svg">
+ <g stroke-linecap="round" stroke-linejoin="round">
+  <path d="m84.832 33.326a7.5008 7.5008 0 0 0-4.2676 3.625l-15.33 29.166-7.0781-24.268a7.5008 7.5008 0 0 0-13.586-1.8359l-28.646 46.48a7.5 7.5 0 0 0 2.4492 10.318 7.5 7.5 0 0 0 10.32-2.4492l19.789-32.107 7.5508 25.889a7.5008 7.5008 0 0 0 13.838 1.3887l16.221-30.857 11.93 31.486a7.5 7.5 0 0 0 9.6719 4.3574 7.5 7.5 0 0 0 4.3555-9.6719l-17.832-47.064a7.5008 7.5008 0 0 0-9.3848-4.457z" fill="#fff"/>  <path d="m120.66 87.031a15.493 15.493 0 0 1-15.493 15.493 15.493 15.493 0 0 1-15.493-15.493 15.493 15.493 0 0 1 15.493-15.493 15.493 15.493 0 0 1 15.493 15.493z" fill="#fff" stroke-width="58.889"/>
+  <path transform="matrix(.81989 0 0 .70172 134.71 60.962)" d="m-24.501 38.294-18.936 10.933v-10.933-10.933l9.4681 5.4664z" fill="#333" stroke-width="15"/>
+ </g>
 </svg>
