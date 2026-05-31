@@ -6,15 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.example.mused.features.library.readSongMetadata
 import com.example.mused.models.SongData
 
-fun loadMusicFilesFromFolder(
-    context: Context,
-    folderUriString: String
-): List<String> {
-    val documentFile = DocumentFile.fromTreeUri(context, folderUriString.toUri())
-        ?: return emptyList()
-
-    return collectMusicFiles(documentFile)
-}
 
 fun loadSongDataFromFolder(
     context: Context,
@@ -27,19 +18,6 @@ fun loadSongDataFromFolder(
         context = context,
         folder = documentFile
     )
-}
-
-private fun collectMusicFiles(folder: DocumentFile): List<String> {
-    return folder.listFiles().flatMap { file ->
-        when {
-            file.isDirectory -> collectMusicFiles(file)
-
-            file.isFile && isSupportedAudioFile(file.name?.lowercase() ?: "") ->
-                listOf(file.uri.toString())
-
-            else -> emptyList()
-        }
-    }
 }
 
 private fun collectSongData(
