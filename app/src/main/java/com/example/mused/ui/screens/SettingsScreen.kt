@@ -152,7 +152,16 @@ fun SettingsScreen(
             Spacer(Modifier.height(4.dp))
 
             Text(
-                text = "Offline Android Music Player",
+                text = "Version 1.0.0",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "Modern Offline Music Player",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -160,7 +169,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(4.dp))
 
             Text(
-                text = "Built with Kotlin + Media3 + Jetpack Compose",
+                text = "Built with Kotlin, Jetpack Compose, Media3 and ExoPlayer",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -168,10 +177,10 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
 
             Text(
-                text = "Version 1",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "© 2026 Damir Bubanović",
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
