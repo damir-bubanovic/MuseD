@@ -3,6 +3,7 @@ package com.example.mused.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -47,9 +49,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.components.AlbumArt
-import com.example.mused.utils.formatTime
+import com.example.mused.ui.theme.MusedCardSurface
 import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
+import com.example.mused.ui.theme.MusedTextPrimary
+import com.example.mused.ui.theme.MusedTextSecondary
+import com.example.mused.utils.formatTime
 
 @Composable
 fun PlayerScreen(
@@ -92,7 +97,11 @@ fun PlayerScreen(
         ) {
             OutlinedButton(
                 onClick = onBack,
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(1.dp, MusedTextPrimary),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MusedTextPrimary
+                )
             ) {
                 Text("Back")
             }
@@ -100,11 +109,12 @@ fun PlayerScreen(
             Text(
                 text = "Now Playing",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MusedTextPrimary
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(8.dp))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -113,20 +123,21 @@ fun PlayerScreen(
             AlbumArt(
                 songUri = songUri,
                 modifier = Modifier
-                    .size(145.dp)
+                    .size(120.dp)
                     .clip(RoundedCornerShape(24.dp))
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
             Text(
                 text = songName ?: "No Song Playing",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+                color = MusedTextPrimary,
                 maxLines = 1
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
 
             Slider(
                 value = playbackPosition.toFloat(),
@@ -151,12 +162,14 @@ fun PlayerScreen(
             ) {
                 Text(
                     text = formatTime(playbackPosition),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MusedTextSecondary
                 )
 
                 Text(
                     text = formatTime(playbackDuration),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MusedTextSecondary
                 )
             }
 
@@ -206,7 +219,7 @@ fun PlayerScreen(
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(6.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -214,7 +227,11 @@ fun PlayerScreen(
             ) {
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    onClick = onToggleShuffle
+                    onClick = onToggleShuffle,
+                    border = BorderStroke(1.dp, MusedTextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MusedTextPrimary
+                    )
                 ) {
                     Text(
                         if (isShuffleEnabled) {
@@ -227,7 +244,11 @@ fun PlayerScreen(
 
                 OutlinedButton(
                     modifier = Modifier.weight(1f),
-                    onClick = onChangeRepeatMode
+                    onClick = onChangeRepeatMode,
+                    border = BorderStroke(1.dp, MusedTextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MusedTextPrimary
+                    )
                 ) {
                     Text(
                         when (selectedRepeatMode) {
@@ -240,7 +261,7 @@ fun PlayerScreen(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -249,7 +270,10 @@ fun PlayerScreen(
             Button(
                 modifier = Modifier.weight(1f),
                 onClick = { showQueue = !showQueue },
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    contentColor = Color.White
+                )
             ) {
                 Text(
                     if (showQueue) {
@@ -263,7 +287,11 @@ fun PlayerScreen(
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = { showSleepTimerOptions = !showSleepTimerOptions },
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(1.dp, MusedTextPrimary),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MusedTextPrimary
+                )
             ) {
                 Text(
                     sleepTimerRemainingSeconds?.let {
@@ -289,7 +317,11 @@ fun PlayerScreen(
                     onClick = {
                         onSleepTimerSelected(5)
                         showSleepTimerOptions = false
-                    }
+                    },
+                    border = BorderStroke(1.dp, MusedTextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MusedTextPrimary
+                    )
                 ) {
                     Text("5 min")
                 }
@@ -299,7 +331,11 @@ fun PlayerScreen(
                     onClick = {
                         onSleepTimerSelected(15)
                         showSleepTimerOptions = false
-                    }
+                    },
+                    border = BorderStroke(1.dp, MusedTextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MusedTextPrimary
+                    )
                 ) {
                     Text("15 min")
                 }
@@ -309,14 +345,18 @@ fun PlayerScreen(
                     onClick = {
                         onSleepTimerSelected(null)
                         showSleepTimerOptions = false
-                    }
+                    },
+                    border = BorderStroke(1.dp, MusedTextPrimary),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MusedTextPrimary
+                    )
                 ) {
                     Text("Off")
                 }
             }
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
         AnimatedVisibility(
             visible = showQueue,
@@ -328,7 +368,7 @@ fun PlayerScreen(
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF111111)
+                    containerColor = MusedCardSurface
                 )
             ) {
                 Column(
@@ -367,14 +407,14 @@ fun PlayerScreen(
                                         },
                                     color =
                                         if (isCurrentSong) {
-                                            MaterialTheme.colorScheme.primary
+                                            MusedRed
                                         } else {
-                                            MaterialTheme.colorScheme.onSurface
+                                            MusedTextPrimary
                                         },
                                     maxLines = 1
                                 )
 
-                                Spacer(Modifier.height(10.dp))
+                                Spacer(Modifier.height(6.dp))
 
                                 HorizontalDivider(
                                     color = Color(0xFF252525)

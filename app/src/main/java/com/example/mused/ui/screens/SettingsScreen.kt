@@ -1,9 +1,11 @@
 package com.example.mused.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,13 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import com.example.mused.ui.theme.MusedCardSurface
 import com.example.mused.ui.theme.MusedDarkSurface
 import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
+import com.example.mused.ui.theme.MusedTextPrimary
+import com.example.mused.ui.theme.MusedTextSecondary
 
 @Composable
 fun SettingsScreen(
@@ -67,7 +70,14 @@ fun SettingsScreen(
         ) {
             OutlinedButton(
                 onClick = onBack,
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(
+                    1.dp,
+                    MusedTextPrimary
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MusedTextPrimary
+                )
             ) {
                 Text("Back")
             }
@@ -146,7 +156,7 @@ fun SettingsScreen(
                 text = "MuseD",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MusedTextPrimary
             )
 
             Spacer(Modifier.height(4.dp))
@@ -163,7 +173,7 @@ fun SettingsScreen(
             Text(
                 text = "Modern Offline Music Player",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MusedTextSecondary
             )
 
             Spacer(Modifier.height(4.dp))
@@ -171,7 +181,7 @@ fun SettingsScreen(
             Text(
                 text = "Built with Kotlin, Jetpack Compose, Media3 and ExoPlayer",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MusedTextSecondary
             )
 
             Spacer(Modifier.height(10.dp))
@@ -180,7 +190,7 @@ fun SettingsScreen(
                 text = "© 2026 Damir Bubanović",
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MusedTextPrimary
             )
         }
     }
@@ -231,7 +241,7 @@ private fun SettingsInfoRow(
             text = "Default Sort Mode",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MusedTextPrimary
         )
 
         Spacer(Modifier.height(3.dp))
@@ -239,7 +249,7 @@ private fun SettingsInfoRow(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MusedTextSecondary
         )
     }
 }
@@ -262,7 +272,7 @@ private fun SettingsSwitchRow(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MusedTextPrimary
             )
 
             Spacer(Modifier.height(3.dp))
@@ -270,7 +280,7 @@ private fun SettingsSwitchRow(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MusedTextSecondary
             )
         }
 
@@ -297,7 +307,7 @@ private fun EqualizerPresetDropdown(
             text = "Equalizer Preset",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MusedTextPrimary
         )
 
         Spacer(Modifier.height(8.dp))
@@ -309,8 +319,13 @@ private fun EqualizerPresetDropdown(
                     expanded.value = true
                 },
                 shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(
+                    1.dp,
+                    MusedTextPrimary
+                ),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = MusedDarkSurface
+                    containerColor = MusedDarkSurface,
+                    contentColor = MusedTextPrimary
                 )
             ) {
                 Text(selectedEqualizerPreset)
@@ -331,7 +346,10 @@ private fun EqualizerPresetDropdown(
                 ).forEach { preset ->
                     DropdownMenuItem(
                         text = {
-                            Text(preset)
+                            Text(
+                                text = preset,
+                                color = MusedTextPrimary
+                            )
                         },
                         onClick = {
                             expanded.value = false
@@ -355,7 +373,7 @@ private fun SettingsActionButton(
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.textButtonColors(
             containerColor = MusedSurfaceVariant,
-            contentColor = MaterialTheme.colorScheme.primary
+            contentColor = MusedTextPrimary
         )
     ) {
         Text(

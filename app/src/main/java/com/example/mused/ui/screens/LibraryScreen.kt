@@ -61,7 +61,13 @@ import com.example.mused.ui.theme.MusedCardSurface
 import com.example.mused.ui.theme.MusedDarkSurface
 import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
+import com.example.mused.ui.theme.MusedTextSecondary
+import com.example.mused.ui.theme.MusedTextPrimary
 import com.example.mused.utils.formatFolderName
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
+
 
 @Composable
 fun LibraryScreen(
@@ -118,13 +124,17 @@ fun LibraryScreen(
                 Text(
                     text = "${songs.size} songs",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MusedTextSecondary
                 )
             }
 
             OutlinedButton(
                 onClick = onOpenSettings,
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(1.dp, MusedTextPrimary),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MusedTextPrimary
+                )
             ) {
                 Text("Settings")
             }
@@ -146,7 +156,7 @@ fun LibraryScreen(
             Text(
                 text = "Folders",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MusedTextSecondary,
                 fontWeight = FontWeight.Bold
             )
 
@@ -175,7 +185,7 @@ fun LibraryScreen(
                             text = formatFolderName(folderUri),
                             modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MusedTextSecondary,
                             maxLines = 1
                         )
 
@@ -196,10 +206,21 @@ fun LibraryScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChange,
-            label = { Text("Search songs") },
+            label = {
+                Text("Search songs")
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = RoundedCornerShape(18.dp)
+            shape = RoundedCornerShape(18.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = MusedTextPrimary,
+                unfocusedTextColor = MusedTextPrimary,
+                focusedBorderColor = MusedTextPrimary,
+                unfocusedBorderColor = MusedTextPrimary,
+                focusedLabelColor = MusedTextPrimary,
+                unfocusedLabelColor = MusedTextSecondary,
+                cursorColor = MusedRed
+            )
         )
 
         Spacer(Modifier.height(10.dp))
@@ -334,11 +355,7 @@ fun LibraryScreen(
                                 } else {
                                     FontWeight.Normal
                                 },
-                                color = if (isCurrentSong) {
-                                    MaterialTheme.colorScheme.onSurface
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
+                                color = MusedTextPrimary,
                                 maxLines = 1
                             )
 
@@ -347,7 +364,7 @@ fun LibraryScreen(
                             Text(
                                 text = song.artist,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MusedTextSecondary,
                                 maxLines = 1
                             )
                         }
@@ -410,7 +427,7 @@ fun LibraryScreen(
                                 text = currentSongName ?: "",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = MusedTextPrimary,
                                 maxLines = 1
                             )
 
@@ -424,7 +441,7 @@ fun LibraryScreen(
                                         "Paused"
                                     },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MusedTextSecondary
                             )
                         }
 
@@ -472,7 +489,7 @@ private fun SortChip(
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MusedDarkSurface,
             selectedContainerColor = MusedSurfaceVariant,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            labelColor = MusedTextSecondary,
             selectedLabelColor = MusedRed
         )
     )
