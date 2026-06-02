@@ -40,7 +40,9 @@ data class ResponsiveSizes(
     val bodyTextSize: TextUnit,
     val smallTextSize: TextUnit,
     val songTitleTextSize: TextUnit,
-    val songArtistTextSize: TextUnit
+    val songArtistTextSize: TextUnit,
+
+    val playerSongTitleSize: TextUnit,
 )
 
 @Composable
@@ -77,7 +79,7 @@ fun rememberResponsiveSizes(): ResponsiveSizes {
             progressBarHeight = 3.dp,
 
             logoSize = 32.dp,
-            albumArtSize = 96.dp,
+            albumArtSize = 110.dp,
             miniPlayerAlbumSize = 46.dp,
             miniPlayerHeight = 76.dp,
             playerButtonSize = 64.dp,
@@ -86,7 +88,9 @@ fun rememberResponsiveSizes(): ResponsiveSizes {
             bodyTextSize = 13.sp,
             smallTextSize = 12.sp,
             songTitleTextSize = 15.sp,
-            songArtistTextSize = 13.sp
+            songArtistTextSize = 13.sp,
+
+            playerSongTitleSize = 18.sp,
         )
 
         ScreenSize.Medium -> ResponsiveSizes(
@@ -116,7 +120,9 @@ fun rememberResponsiveSizes(): ResponsiveSizes {
             bodyTextSize = 15.sp,
             smallTextSize = 13.sp,
             songTitleTextSize = 16.sp,
-            songArtistTextSize = 13.sp
+            songArtistTextSize = 13.sp,
+
+            playerSongTitleSize = 22.sp,
         )
 
         ScreenSize.Large -> ResponsiveSizes(
@@ -146,7 +152,9 @@ fun rememberResponsiveSizes(): ResponsiveSizes {
             bodyTextSize = 16.sp,
             smallTextSize = 14.sp,
             songTitleTextSize = 17.sp,
-            songArtistTextSize = 14.sp
+            songArtistTextSize = 14.sp,
+
+            playerSongTitleSize = 26.sp,
         )
     }
 }

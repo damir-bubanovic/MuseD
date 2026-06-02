@@ -456,7 +456,7 @@ fun LibraryScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp),
+                            .height(responsive.progressBarHeight),
                         color = MusedRed,
                         trackColor = MusedSurfaceVariant
                     )

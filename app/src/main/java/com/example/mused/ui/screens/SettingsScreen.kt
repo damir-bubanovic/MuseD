@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -78,7 +79,9 @@ fun SettingsScreen(
         ) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.height(responsive.buttonHeight),
+                modifier = Modifier
+                    .width(responsive.headerButtonWidth)
+                    .height(responsive.buttonHeight),
                 shape = RoundedCornerShape(50),
                 border = BorderStroke(1.dp, MusedTextPrimary),
                 colors = ButtonDefaults.outlinedButtonColors(

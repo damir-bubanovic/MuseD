@@ -144,14 +144,18 @@ fun PlayerScreen(
             Text(
                 text = songName ?: "No Song Playing",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = responsive.titleTextSize
+                    fontSize = responsive.playerSongTitleSize
                 ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary,
                 maxLines = 1
             )
 
-            Spacer(Modifier.height(responsive.smallSpacing))
+            Spacer(
+                Modifier.height(
+                    responsive.sectionSpacing
+                )
+            )
 
             Slider(
                 value = playbackPosition.toFloat(),
@@ -445,7 +449,7 @@ fun PlayerScreen(
                                     }
                                     .padding(
                                         horizontal = responsive.cardPadding,
-                                        vertical = responsive.cardVerticalPadding
+                                        vertical = responsive.cardVerticalPadding / 2
                                     )
                             ) {
                                 Text(
@@ -468,7 +472,11 @@ fun PlayerScreen(
                                     maxLines = 1
                                 )
 
-                                Spacer(Modifier.height(responsive.smallSpacing))
+                                Spacer(
+                                    Modifier.height(
+                                        responsive.smallSpacing / 2
+                                    )
+                                )
 
                                 HorizontalDivider(
                                     color = Color(0xFF252525)
