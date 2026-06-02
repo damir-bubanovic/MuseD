@@ -422,7 +422,10 @@ private fun EqualizerPresetDropdown(
                 expanded = expanded.value,
                 onDismissRequest = {
                     expanded.value = false
-                }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MusedDarkSurface)
             ) {
                 listOf(
                     "Flat",
@@ -433,10 +436,17 @@ private fun EqualizerPresetDropdown(
                 ).forEach { preset ->
                     DropdownMenuItem(
                         text = {
-                            Text(
-                                text = preset,
-                                color = MusedTextPrimary
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = preset,
+                                    color = MusedTextPrimary,
+                                    fontSize = bodyTextSize,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         },
                         onClick = {
                             expanded.value = false
