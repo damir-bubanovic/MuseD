@@ -12,10 +12,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -43,6 +46,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +57,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.example.mused.R
 import com.example.mused.models.SongData
@@ -61,13 +67,10 @@ import com.example.mused.ui.theme.MusedCardSurface
 import com.example.mused.ui.theme.MusedDarkSurface
 import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
-import com.example.mused.ui.theme.MusedTextSecondary
 import com.example.mused.ui.theme.MusedTextPrimary
+import com.example.mused.ui.theme.MusedTextSecondary
+import com.example.mused.ui.theme.rememberResponsiveSizes
 import com.example.mused.utils.formatFolderName
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
-
 
 @Composable
 fun LibraryScreen(
@@ -92,11 +95,16 @@ fun LibraryScreen(
     onPlayPause: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    val responsive = rememberResponsiveSizes()
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(
+                horizontal = responsive.screenPadding,
+                vertical = responsive.sectionSpacing
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -105,69 +113,84 @@ fun LibraryScreen(
             Image(
                 painter = painterResource(id = R.drawable.mused_header_logo),
                 contentDescription = "MuseD Logo",
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(responsive.logoSize),
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(responsive.sectionSpacing))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = "MuseD",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = responsive.titleTextSize
+                    ),
                     color = MusedRed,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     text = "${songs.size} songs",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = responsive.smallTextSize
+                    ),
                     color = MusedTextSecondary
                 )
             }
 
             OutlinedButton(
                 onClick = onOpenSettings,
+                modifier = Modifier.height(responsive.buttonHeight),
                 shape = RoundedCornerShape(50),
                 border = BorderStroke(1.dp, MusedTextPrimary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MusedTextPrimary
                 )
             ) {
-                Text("Settings")
+                Text(
+                    text = "Settings",
+                    fontSize = responsive.bodyTextSize
+                )
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         Button(
             onClick = onPickFolder,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(responsive.buttonHeight),
+            shape = RoundedCornerShape(responsive.cardCornerRadius)
         ) {
-            Text("Add Music Folder")
+            Text(
+                text = "Add Music Folder",
+                fontSize = responsive.bodyTextSize
+            )
         }
 
         if (selectedFolderUris.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             Text(
                 text = "Folders",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = responsive.smallTextSize
+                ),
                 color = MusedTextSecondary,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             selectedFolderUris.forEach { folderUri ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 3.dp),
-                    shape = RoundedCornerShape(16.dp),
+                        .padding(vertical = responsive.smallSpacing / 2),
+                    shape = RoundedCornerShape(responsive.cardCornerRadius),
                     colors = CardDefaults.cardColors(
                         containerColor = MusedDarkSurface
                     ),
@@ -178,13 +201,20 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 12.dp, end = 2.dp, top = 4.dp, bottom = 4.dp),
+                            .padding(
+                                start = responsive.cardPadding,
+                                end = responsive.smallSpacing,
+                                top = responsive.cardVerticalPadding,
+                                bottom = responsive.cardVerticalPadding
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = formatFolderName(folderUri),
                             modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = responsive.smallTextSize
+                            ),
                             color = MusedTextSecondary,
                             maxLines = 1
                         )
@@ -201,17 +231,25 @@ fun LibraryScreen(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChange,
             label = {
-                Text("Search songs")
+                Text(
+                    text = "Search songs",
+                    fontSize = responsive.bodyTextSize
+                )
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(responsive.searchBarHeight),
             singleLine = true,
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(responsive.cardCornerRadius),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = responsive.bodyTextSize
+            ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = MusedTextPrimary,
                 unfocusedTextColor = MusedTextPrimary,
@@ -223,53 +261,61 @@ fun LibraryScreen(
             )
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(responsive.smallSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SortChip(
-                label = "Name A-Z",
-                selected = sortMode == "Name A-Z",
-                onClick = { onSortModeChange("Name A-Z") }
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                SortChip(
+                    label = "A-Z",
+                    selected = sortMode == "Name A-Z",
+                    chipHeight = responsive.chipHeight,
+                    fontSize = responsive.smallTextSize,
+                    onClick = { onSortModeChange("Name A-Z") }
+                )
+            }
 
-            SortChip(
-                label = "Name Z-A",
-                selected = sortMode == "Name Z-A",
-                onClick = { onSortModeChange("Name Z-A") }
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                SortChip(
+                    label = "Z-A",
+                    selected = sortMode == "Name Z-A",
+                    chipHeight = responsive.chipHeight,
+                    fontSize = responsive.smallTextSize,
+                    onClick = { onSortModeChange("Name Z-A") }
+                )
+            }
+
+            Box(modifier = Modifier.weight(1f)) {
+                SortChip(
+                    label = "New",
+                    selected = sortMode == "Newest First",
+                    chipHeight = responsive.chipHeight,
+                    fontSize = responsive.smallTextSize,
+                    onClick = { onSortModeChange("Newest First") }
+                )
+            }
+
+            Box(modifier = Modifier.weight(1f)) {
+                SortChip(
+                    label = "Old",
+                    selected = sortMode == "Oldest First",
+                    chipHeight = responsive.chipHeight,
+                    fontSize = responsive.smallTextSize,
+                    onClick = { onSortModeChange("Oldest First") }
+                )
+            }
         }
 
-        Spacer(Modifier.height(6.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SortChip(
-                label = "Newest",
-                selected = sortMode == "Newest First",
-                onClick = { onSortModeChange("Newest First") }
-            )
-
-            SortChip(
-                label = "Oldest",
-                selected = sortMode == "Oldest First",
-                onClick = { onSortModeChange("Oldest First") }
-            )
-        }
-
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.spacedBy(responsive.smallSpacing)
         ) {
             itemsIndexed(sortedSongs) { _, song ->
                 val index =
@@ -316,7 +362,7 @@ fun LibraryScreen(
                                 onPlaySong(index)
                             }
                         },
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(responsive.cardCornerRadius),
                     colors = CardDefaults.cardColors(
                         containerColor = animatedCardColor
                     ),
@@ -327,13 +373,16 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(
+                                horizontal = responsive.cardPadding,
+                                vertical = responsive.cardVerticalPadding
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = if (isCurrentSong) "▶" else "",
                             modifier = Modifier
-                                .width(22.dp)
+                                .width(responsive.sectionSpacing)
                                 .graphicsLayer {
                                     scaleX =
                                         if (isCurrentSong && isPlaying) pulseScale else 1f
@@ -344,12 +393,14 @@ fun LibraryScreen(
                             fontWeight = FontWeight.Bold
                         )
 
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(responsive.smallSpacing))
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = song.title,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = responsive.songTitleTextSize
+                                ),
                                 fontWeight = if (isCurrentSong) {
                                     FontWeight.Bold
                                 } else {
@@ -359,11 +410,13 @@ fun LibraryScreen(
                                 maxLines = 1
                             )
 
-                            Spacer(Modifier.height(2.dp))
+                            Spacer(Modifier.height(responsive.smallSpacing / 2))
 
                             Text(
                                 text = song.artist,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = responsive.songArtistTextSize
+                                ),
                                 color = MusedTextSecondary,
                                 maxLines = 1
                             )
@@ -381,8 +434,9 @@ fun LibraryScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(responsive.miniPlayerHeight)
                     .clickable { onOpenPlayer() },
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(responsive.cardCornerRadius),
                 colors = CardDefaults.cardColors(
                     containerColor = MusedCardSurface
                 ),
@@ -410,28 +464,34 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                            .weight(1f)
+                            .padding(
+                                horizontal = responsive.cardPadding,
+                                vertical = responsive.smallSpacing
+                            ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         AlbumArt(
                             songUri = currentSongUri,
-                            modifier = Modifier.size(52.dp)
+                            modifier = Modifier.size(responsive.miniPlayerAlbumSize)
                         )
 
-                        Spacer(Modifier.width(12.dp))
+                        Spacer(Modifier.width(responsive.sectionSpacing))
 
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
                                 text = currentSongName ?: "",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = responsive.songTitleTextSize
+                                ),
                                 fontWeight = FontWeight.Bold,
                                 color = MusedTextPrimary,
                                 maxLines = 1
                             )
 
-                            Spacer(Modifier.height(2.dp))
+                            Spacer(Modifier.height(responsive.smallSpacing / 2))
 
                             Text(
                                 text =
@@ -440,7 +500,9 @@ fun LibraryScreen(
                                     } else {
                                         "Paused"
                                     },
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = responsive.songArtistTextSize
+                                ),
                                 color = MusedTextSecondary
                             )
                         }
@@ -470,20 +532,31 @@ fun LibraryScreen(
 private fun SortChip(
     label: String,
     selected: Boolean,
+    chipHeight: Dp,
+    fontSize: TextUnit,
     onClick: () -> Unit
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(chipHeight),
         label = {
-            Text(
-                text = label,
-                fontWeight = if (selected) {
-                    FontWeight.Bold
-                } else {
-                    FontWeight.Normal
-                }
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    fontSize = fontSize,
+                    fontWeight = if (selected) {
+                        FontWeight.Bold
+                    } else {
+                        FontWeight.Normal
+                    }
+                )
+            }
         },
         shape = RoundedCornerShape(50),
         colors = FilterChipDefaults.filterChipColors(

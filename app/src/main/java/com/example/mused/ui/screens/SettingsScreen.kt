@@ -33,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.example.mused.ui.theme.MusedCardSurface
 import com.example.mused.ui.theme.MusedDarkSurface
@@ -40,6 +42,7 @@ import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
 import com.example.mused.ui.theme.MusedTextPrimary
 import com.example.mused.ui.theme.MusedTextSecondary
+import com.example.mused.ui.theme.rememberResponsiveSizes
 
 @Composable
 fun SettingsScreen(
@@ -55,13 +58,18 @@ fun SettingsScreen(
     onClearFolders: () -> Unit,
     onClearPlaybackState: () -> Unit
 ) {
+    val responsive = rememberResponsiveSizes()
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 14.dp)
+            .padding(
+                horizontal = responsive.screenPadding,
+                vertical = responsive.sectionSpacing
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -70,125 +78,173 @@ fun SettingsScreen(
         ) {
             OutlinedButton(
                 onClick = onBack,
+                modifier = Modifier.height(responsive.buttonHeight),
                 shape = RoundedCornerShape(50),
-                border = BorderStroke(
-                    1.dp,
-                    MusedTextPrimary
-                ),
+                border = BorderStroke(1.dp, MusedTextPrimary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MusedTextPrimary
                 )
             ) {
-                Text("Back")
+                Text(
+                    text = "Back",
+                    fontSize = responsive.bodyTextSize
+                )
             }
 
             Text(
                 text = "Settings",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = responsive.titleTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         SettingsSectionCard(
-            title = "Library"
+            title = "Library",
+            cardCornerRadius = responsive.cardCornerRadius,
+            cardPadding = responsive.cardPadding,
+            sectionSpacing = responsive.sectionSpacing,
+            titleTextSize = responsive.bodyTextSize
         ) {
             SettingsInfoRow(
-                subtitle = currentSortMode
+                subtitle = currentSortMode,
+                bodyTextSize = responsive.bodyTextSize,
+                smallTextSize = responsive.smallTextSize,
+                smallSpacing = responsive.smallSpacing
             )
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             SettingsActionButton(
                 text = "Clear All Folders",
+                buttonHeight = responsive.buttonHeight,
+                cardCornerRadius = responsive.cardCornerRadius,
+                bodyTextSize = responsive.bodyTextSize,
                 onClick = onClearFolders
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             SettingsActionButton(
                 text = "Clear Playback State",
+                buttonHeight = responsive.buttonHeight,
+                cardCornerRadius = responsive.cardCornerRadius,
+                bodyTextSize = responsive.bodyTextSize,
                 onClick = onClearPlaybackState
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         SettingsSectionCard(
-            title = "Appearance"
+            title = "Appearance",
+            cardCornerRadius = responsive.cardCornerRadius,
+            cardPadding = responsive.cardPadding,
+            sectionSpacing = responsive.sectionSpacing,
+            titleTextSize = responsive.bodyTextSize
         ) {
             SettingsSwitchRow(
                 title = "Dynamic Theme",
                 subtitle = "Use Android wallpaper colors",
                 checked = dynamicThemeEnabled,
+                bodyTextSize = responsive.bodyTextSize,
+                smallTextSize = responsive.smallTextSize,
+                smallSpacing = responsive.smallSpacing,
                 onCheckedChange = onDynamicThemeChange
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         SettingsSectionCard(
-            title = "Audio"
+            title = "Audio",
+            cardCornerRadius = responsive.cardCornerRadius,
+            cardPadding = responsive.cardPadding,
+            sectionSpacing = responsive.sectionSpacing,
+            titleTextSize = responsive.bodyTextSize
         ) {
             SettingsSwitchRow(
                 title = "Equalizer",
                 subtitle = "Enable audio enhancement",
                 checked = equalizerEnabled,
+                bodyTextSize = responsive.bodyTextSize,
+                smallTextSize = responsive.smallTextSize,
+                smallSpacing = responsive.smallSpacing,
                 onCheckedChange = onEqualizerEnabledChange
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             EqualizerPresetDropdown(
                 selectedEqualizerPreset = selectedEqualizerPreset,
+                buttonHeight = responsive.buttonHeight,
+                cardCornerRadius = responsive.cardCornerRadius,
+                bodyTextSize = responsive.bodyTextSize,
+                smallSpacing = responsive.smallSpacing,
                 onEqualizerPresetSelected = onEqualizerPresetSelected
             )
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         SettingsSectionCard(
-            title = "About"
+            title = "About",
+            cardCornerRadius = responsive.cardCornerRadius,
+            cardPadding = responsive.cardPadding,
+            sectionSpacing = responsive.sectionSpacing,
+            titleTextSize = responsive.bodyTextSize
         ) {
             Text(
                 text = "MuseD",
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = responsive.bodyTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             Text(
                 text = "Version 1.0.0",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = responsive.smallTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             Text(
                 text = "Modern Offline Music Player",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = responsive.smallTextSize
+                ),
                 color = MusedTextSecondary
             )
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             Text(
                 text = "Built with Kotlin, Jetpack Compose, Media3 and ExoPlayer",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = responsive.smallTextSize
+                ),
                 color = MusedTextSecondary
             )
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             Text(
                 text = "© 2026 Damir Bubanović",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = responsive.smallTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary
             )
@@ -199,11 +255,15 @@ fun SettingsScreen(
 @Composable
 private fun SettingsSectionCard(
     title: String,
+    cardCornerRadius: Dp,
+    cardPadding: Dp,
+    sectionSpacing: Dp,
+    titleTextSize: TextUnit,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(cardCornerRadius),
         colors = CardDefaults.cardColors(
             containerColor = MusedCardSurface
         ),
@@ -214,16 +274,18 @@ private fun SettingsSectionCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(cardPadding)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = titleTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedRed
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(sectionSpacing))
 
             content()
         }
@@ -232,23 +294,30 @@ private fun SettingsSectionCard(
 
 @Composable
 private fun SettingsInfoRow(
-    subtitle: String
+    subtitle: String,
+    bodyTextSize: TextUnit,
+    smallTextSize: TextUnit,
+    smallSpacing: Dp
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = "Default Sort Mode",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = bodyTextSize
+            ),
             fontWeight = FontWeight.Bold,
             color = MusedTextPrimary
         )
 
-        Spacer(Modifier.height(3.dp))
+        Spacer(Modifier.height(smallSpacing))
 
         Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontSize = smallTextSize
+            ),
             color = MusedTextSecondary
         )
     }
@@ -259,6 +328,9 @@ private fun SettingsSwitchRow(
     title: String,
     subtitle: String,
     checked: Boolean,
+    bodyTextSize: TextUnit,
+    smallTextSize: TextUnit,
+    smallSpacing: Dp,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
@@ -270,16 +342,20 @@ private fun SettingsSwitchRow(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = bodyTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary
             )
 
-            Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(smallSpacing))
 
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = smallTextSize
+                ),
                 color = MusedTextSecondary
             )
         }
@@ -294,6 +370,10 @@ private fun SettingsSwitchRow(
 @Composable
 private fun EqualizerPresetDropdown(
     selectedEqualizerPreset: String,
+    buttonHeight: Dp,
+    cardCornerRadius: Dp,
+    bodyTextSize: TextUnit,
+    smallSpacing: Dp,
     onEqualizerPresetSelected: (String) -> Unit
 ) {
     val expanded = remember {
@@ -305,30 +385,34 @@ private fun EqualizerPresetDropdown(
     ) {
         Text(
             text = "Equalizer Preset",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = bodyTextSize
+            ),
             fontWeight = FontWeight.Bold,
             color = MusedTextPrimary
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(smallSpacing))
 
         Box {
             OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(buttonHeight),
                 onClick = {
                     expanded.value = true
                 },
-                shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MusedTextPrimary
-                ),
+                shape = RoundedCornerShape(cardCornerRadius),
+                border = BorderStroke(1.dp, MusedTextPrimary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = MusedDarkSurface,
                     contentColor = MusedTextPrimary
                 )
             ) {
-                Text(selectedEqualizerPreset)
+                Text(
+                    text = selectedEqualizerPreset,
+                    fontSize = bodyTextSize
+                )
             }
 
             DropdownMenu(
@@ -365,12 +449,17 @@ private fun EqualizerPresetDropdown(
 @Composable
 private fun SettingsActionButton(
     text: String,
+    buttonHeight: Dp,
+    cardCornerRadius: Dp,
+    bodyTextSize: TextUnit,
     onClick: () -> Unit
 ) {
     TextButton(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(buttonHeight),
         onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(cardCornerRadius),
         colors = ButtonDefaults.textButtonColors(
             containerColor = MusedSurfaceVariant,
             contentColor = MusedTextPrimary
@@ -378,6 +467,7 @@ private fun SettingsActionButton(
     ) {
         Text(
             text = text,
+            fontSize = bodyTextSize,
             fontWeight = FontWeight.Bold
         )
     }

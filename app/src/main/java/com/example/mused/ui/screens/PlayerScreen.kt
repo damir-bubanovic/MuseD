@@ -54,6 +54,7 @@ import com.example.mused.ui.theme.MusedRed
 import com.example.mused.ui.theme.MusedSurfaceVariant
 import com.example.mused.ui.theme.MusedTextPrimary
 import com.example.mused.ui.theme.MusedTextSecondary
+import com.example.mused.ui.theme.rememberResponsiveSizes
 import com.example.mused.utils.formatTime
 
 @Composable
@@ -80,6 +81,8 @@ fun PlayerScreen(
     onQueueSongClick: (Int) -> Unit,
     onSleepTimerSelected: (Int?) -> Unit
 ) {
+    val responsive = rememberResponsiveSizes()
+
     var showQueue by remember { mutableStateOf(true) }
     var showSleepTimerOptions by remember { mutableStateOf(false) }
 
@@ -88,7 +91,10 @@ fun PlayerScreen(
             .fillMaxSize()
             .background(Color.Black)
             .navigationBarsPadding()
-            .padding(horizontal = 18.dp, vertical = 14.dp)
+            .padding(
+                horizontal = responsive.screenPadding,
+                vertical = responsive.sectionSpacing
+            )
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -97,24 +103,30 @@ fun PlayerScreen(
         ) {
             OutlinedButton(
                 onClick = onBack,
+                modifier = Modifier.height(responsive.buttonHeight),
                 shape = RoundedCornerShape(50),
                 border = BorderStroke(1.dp, MusedTextPrimary),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MusedTextPrimary
                 )
             ) {
-                Text("Back")
+                Text(
+                    text = "Back",
+                    fontSize = responsive.bodyTextSize
+                )
             }
 
             Text(
                 text = "Now Playing",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = responsive.bodyTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -123,21 +135,23 @@ fun PlayerScreen(
             AlbumArt(
                 songUri = songUri,
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .size(responsive.albumArtSize)
+                    .clip(RoundedCornerShape(responsive.cardCornerRadius))
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             Text(
                 text = songName ?: "No Song Playing",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = responsive.titleTextSize
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MusedTextPrimary,
                 maxLines = 1
             )
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             Slider(
                 value = playbackPosition.toFloat(),
@@ -154,26 +168,28 @@ fun PlayerScreen(
                 )
             )
 
-            Spacer(Modifier.height(2.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = formatTime(playbackPosition),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = responsive.smallTextSize
+                    ),
                     color = MusedTextSecondary
                 )
 
                 Text(
                     text = formatTime(playbackDuration),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = responsive.smallTextSize
+                    ),
                     color = MusedTextSecondary
                 )
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(responsive.smallSpacing))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -183,14 +199,14 @@ fun PlayerScreen(
                     Icon(
                         imageVector = Icons.Default.SkipPrevious,
                         contentDescription = "Previous",
-                        modifier = Modifier.size(34.dp),
+                        modifier = Modifier.size(responsive.playerButtonSize / 2),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
+                        .size(responsive.playerButtonSize)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                         .clickable { onPlayPause() },
@@ -205,7 +221,7 @@ fun PlayerScreen(
                             },
                         contentDescription = "Play/Pause",
                         tint = Color.White,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(responsive.playerButtonSize / 2)
                     )
                 }
 
@@ -213,20 +229,22 @@ fun PlayerScreen(
                     Icon(
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = "Next",
-                        modifier = Modifier.size(34.dp),
+                        modifier = Modifier.size(responsive.playerButtonSize / 2),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(responsive.sectionSpacing))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(responsive.smallSpacing)
             ) {
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(responsive.buttonHeight),
                     onClick = onToggleShuffle,
                     border = BorderStroke(1.dp, MusedTextPrimary),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -234,16 +252,20 @@ fun PlayerScreen(
                     )
                 ) {
                     Text(
-                        if (isShuffleEnabled) {
-                            "Shuffle ON"
-                        } else {
-                            "Shuffle OFF"
-                        }
+                        text =
+                            if (isShuffleEnabled) {
+                                "Shuffle ON"
+                            } else {
+                                "Shuffle OFF"
+                            },
+                        fontSize = responsive.smallTextSize
                     )
                 }
 
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(responsive.buttonHeight),
                     onClick = onChangeRepeatMode,
                     border = BorderStroke(1.dp, MusedTextPrimary),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -251,24 +273,28 @@ fun PlayerScreen(
                     )
                 ) {
                     Text(
-                        when (selectedRepeatMode) {
-                            1 -> "Repeat ONE"
-                            2 -> "Repeat ALL"
-                            else -> "Repeat OFF"
-                        }
+                        text =
+                            when (selectedRepeatMode) {
+                                1 -> "Repeat ONE"
+                                2 -> "Repeat ALL"
+                                else -> "Repeat OFF"
+                            },
+                        fontSize = responsive.smallTextSize
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(responsive.sectionSpacing))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(responsive.smallSpacing)
         ) {
             Button(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(responsive.buttonHeight),
                 onClick = { showQueue = !showQueue },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
@@ -276,16 +302,20 @@ fun PlayerScreen(
                 )
             ) {
                 Text(
-                    if (showQueue) {
-                        "Hide Queue"
-                    } else {
-                        "Show Queue"
-                    }
+                    text =
+                        if (showQueue) {
+                            "Hide Queue"
+                        } else {
+                            "Show Queue"
+                        },
+                    fontSize = responsive.smallTextSize
                 )
             }
 
             OutlinedButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(responsive.buttonHeight),
                 onClick = { showSleepTimerOptions = !showSleepTimerOptions },
                 shape = RoundedCornerShape(50),
                 border = BorderStroke(1.dp, MusedTextPrimary),
@@ -294,9 +324,11 @@ fun PlayerScreen(
                 )
             ) {
                 Text(
-                    sleepTimerRemainingSeconds?.let {
-                        "Timer ${it}s"
-                    } ?: "Sleep Timer"
+                    text =
+                        sleepTimerRemainingSeconds?.let {
+                            "Timer ${it}s"
+                        } ?: "Sleep Timer",
+                    fontSize = responsive.smallTextSize
                 )
             }
         }
@@ -309,11 +341,13 @@ fun PlayerScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(top = responsive.smallSpacing),
+                horizontalArrangement = Arrangement.spacedBy(responsive.smallSpacing)
             ) {
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(responsive.buttonHeight),
                     onClick = {
                         onSleepTimerSelected(5)
                         showSleepTimerOptions = false
@@ -323,11 +357,16 @@ fun PlayerScreen(
                         contentColor = MusedTextPrimary
                     )
                 ) {
-                    Text("5 min")
+                    Text(
+                        text = "5 min",
+                        fontSize = responsive.smallTextSize
+                    )
                 }
 
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(responsive.buttonHeight),
                     onClick = {
                         onSleepTimerSelected(15)
                         showSleepTimerOptions = false
@@ -337,11 +376,16 @@ fun PlayerScreen(
                         contentColor = MusedTextPrimary
                     )
                 ) {
-                    Text("15 min")
+                    Text(
+                        text = "15 min",
+                        fontSize = responsive.smallTextSize
+                    )
                 }
 
                 OutlinedButton(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(responsive.buttonHeight),
                     onClick = {
                         onSleepTimerSelected(null)
                         showSleepTimerOptions = false
@@ -351,12 +395,15 @@ fun PlayerScreen(
                         contentColor = MusedTextPrimary
                     )
                 ) {
-                    Text("Off")
+                    Text(
+                        text = "Off",
+                        fontSize = responsive.smallTextSize
+                    )
                 }
             }
         }
 
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(responsive.smallSpacing))
 
         AnimatedVisibility(
             visible = showQueue,
@@ -366,7 +413,7 @@ fun PlayerScreen(
         ) {
             Card(
                 modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(responsive.cardCornerRadius),
                 colors = CardDefaults.cardColors(
                     containerColor = MusedCardSurface
                 )
@@ -376,8 +423,10 @@ fun PlayerScreen(
                 ) {
                     Text(
                         text = "Up Next",
-                        modifier = Modifier.padding(16.dp),
-                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(responsive.cardPadding),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = responsive.bodyTextSize
+                        ),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -394,11 +443,16 @@ fun PlayerScreen(
                                     .clickable {
                                         onQueueSongClick(index)
                                     }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .padding(
+                                        horizontal = responsive.cardPadding,
+                                        vertical = responsive.cardVerticalPadding
+                                    )
                             ) {
                                 Text(
                                     text = title,
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = responsive.songTitleTextSize
+                                    ),
                                     fontWeight =
                                         if (isCurrentSong) {
                                             FontWeight.Bold
@@ -414,7 +468,7 @@ fun PlayerScreen(
                                     maxLines = 1
                                 )
 
-                                Spacer(Modifier.height(6.dp))
+                                Spacer(Modifier.height(responsive.smallSpacing))
 
                                 HorizontalDivider(
                                     color = Color(0xFF252525)
