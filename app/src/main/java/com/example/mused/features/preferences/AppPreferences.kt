@@ -3,6 +3,7 @@ package com.example.mused.features.preferences
 import android.content.Context
 import androidx.core.content.edit
 import com.example.mused.features.player.EqualizerPreset
+import org.json.JSONArray
 
 class AppPreferences(
     context: Context
@@ -14,6 +15,16 @@ class AppPreferences(
         )
 
     fun loadSelectedFolderUris(): List<String> {
+        val orderedJson = prefs.getString(SELECTED_FOLDER_URIS_ORDERED_KEY, null)
+
+        if (orderedJson != null) {
+            val jsonArray = JSONArray(orderedJson)
+
+            return List(jsonArray.length()) { index ->
+                jsonArray.getString(index)
+            }
+        }
+
         return prefs.getStringSet(
             SELECTED_FOLDER_URIS_KEY,
             emptySet()
@@ -22,6 +33,11 @@ class AppPreferences(
 
     fun saveSelectedFolderUris(folderUris: List<String>) {
         prefs.edit {
+            putString(
+                SELECTED_FOLDER_URIS_ORDERED_KEY,
+                JSONArray(folderUris).toString()
+            )
+
             putStringSet(
                 SELECTED_FOLDER_URIS_KEY,
                 folderUris.toSet()
@@ -32,6 +48,7 @@ class AppPreferences(
     fun clearSelectedFolderUris() {
         prefs.edit {
             remove(SELECTED_FOLDER_URIS_KEY)
+            remove(SELECTED_FOLDER_URIS_ORDERED_KEY)
         }
     }
 
@@ -140,6 +157,8 @@ class AppPreferences(
         private const val PREFS_NAME = "mused_prefs"
 
         private const val SELECTED_FOLDER_URIS_KEY = "selected_folder_uris"
+        private const val SELECTED_FOLDER_URIS_ORDERED_KEY = "selected_folder_uris_ordered"
+
 
         private const val SORT_MODE_KEY = "sort_mode"
         private const val DEFAULT_SORT_MODE = "Name A-Z"

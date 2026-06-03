@@ -119,8 +119,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(sortMode, searchQuery, songs) {
-        libraryViewModel.refreshVisibleSongs(sortMode)
+    LaunchedEffect(searchQuery, songs) {
+        libraryViewModel.refreshVisibleSongs()
     }
 
     DisposableEffect(mediaControllerManager) {
@@ -443,6 +443,45 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             playbackStateViewModel.hasAutoResumed = false
         }
 
+
+    fun syncPlaybackQueueKeepingCurrentSong() {
+        val controller = mediaController ?: return
+        val currentSongUri = playbackUiState.currentSongUri ?: return
+        val currentIndex =
+            songs.indexOfFirst { song ->
+                song.uri == currentSongUri
+            }
+
+        if (currentIndex == -1) return
+
+        val currentPosition =
+            controller.currentPosition.coerceAtLeast(0L)
+
+        val wasPlaying = controller.isPlaying
+
+        controller.setMediaItems(
+            libraryViewModel.mediaItems,
+            currentIndex,
+            currentPosition
+        )
+
+        controller.shuffleModeEnabled = isShuffleEnabled
+        controller.repeatMode = PlaybackController.toMedia3RepeatMode(selectedRepeatMode)
+
+        controller.prepare()
+
+        if (wasPlaying) {
+            controller.play()
+        }
+
+        homeViewModel.setCurrentSong(
+            songName = songs[currentIndex].title,
+            songUri = songs[currentIndex].uri,
+            songIndex = currentIndex
+        )
+    }
+
+
     AnimatedContent(
         targetState = when {
             showSettingsScreen -> "settings"
@@ -560,13 +599,16 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     sortMode = sortMode,
                     onSearchChange = { newSearchQuery ->
                         searchQuery =
-                            libraryViewModel.updateSearchQuery(newSearchQuery, sortMode)
+                            libraryViewModel.updateSearchQuery(newSearchQuery)
                     },
                     onSortModeChange = { newSortMode ->
                         sortMode =
                             settingsViewModel.updateSortMode(newSortMode)
 
-                        libraryViewModel.refreshVisibleSongs(sortMode)
+                        songs =
+                            libraryViewModel.refreshPlaybackQueue(sortMode)
+
+                        syncPlaybackQueueKeepingCurrentSong()
                     },
                     onPickFolder = {
                         openFolderPicker()
