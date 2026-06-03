@@ -37,6 +37,9 @@ Built entirely around local music libraries, MuseD provides a fast, privacy-frie
     * Oldest First
 * Current playing song highlighting
 * Cached library loading for faster startup
+* Playback queue automatically follows the selected sort order
+* Natural filename sorting support (1, 2, 3, 10, 11...)
+* Consistent queue order across app restarts
 
 ### Playback
 
@@ -49,6 +52,9 @@ Built entirely around local music libraries, MuseD provides a fast, privacy-frie
 * Queue-based playback
 * Up Next queue view
 * Tap queue item to instantly play
+* Queue synchronization with library sorting
+* Sort changes preserve the currently playing song and playback position
+
 
 ### Background Playback
 
@@ -102,6 +108,7 @@ Built entirely around local music libraries, MuseD provides a fast, privacy-frie
 
 ### UI / UX
 
+* Splash screen on application startup
 * Jetpack Compose UI
 * Modern Material 3 design
 * Dynamic Material You theming
@@ -170,12 +177,15 @@ README.md
 * MediaController abstraction for playback communication
 * Album art memory and disk caching
 * Optimized for large offline music libraries
+* Stable playback queue management
+* Persistent folder ordering across application restarts
 * Focused on stability and maintainability
 
 ---
 
 ## 📌 Current Status
 
+* Splash screen complete
 * Local music playback complete
 * Background playback complete
 * Queue system complete
@@ -184,6 +194,7 @@ README.md
 * Equalizer support complete
 * Dynamic themes complete
 * Multi-folder support complete
+* Playback queue sorting synchronization complete
 * Architecture refactor complete
 * Stabilization and release preparation phase
 
